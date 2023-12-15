@@ -1,8 +1,0 @@
-{
-  "error": {
-    "message": "1 validation error for Request\nbody\n  field required (type=value_error.missing)",
-    "type": "invalid_request_error",
-    "param": null,
-    "code": null
-  }
-}
