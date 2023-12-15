@@ -1,0 +1,16 @@
+{
+  "id": "asst_Dp8Bv0PASjTe08NybMvF9nls",
+  "object": "assistant",
+  "created_at": 1701182821,
+  "name": "Math Tutor",
+  "description": "A general Math tutor",
+  "model": "gpt-3.5-turbo",
+  "instructions": "You are a personal math tutor.When asked a question, write an run Python code to answer the question.",
+  "tools": [
+    {
+      "type": "code_interpreter"
+    }
+  ],
+  "file_ids": [],
+  "metadata": {}
+}

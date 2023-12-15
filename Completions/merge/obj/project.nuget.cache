@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "/zwlCA/v/MkBKdqwIixgZCvHn8HNVu6yWsVfwPRanLyr6y/268hOLSIdx0dLMdT5B2asXLNz086rMar8PnzHvQ==",
+  "success": true,
+  "projectFilePath": "/Users/loicniragire/OpenAI/Completions/merge/merge.csproj",
+  "expectedPackageFiles": [
+    "/Users/loicniragire/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

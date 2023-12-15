@@ -1,0 +1,42 @@
+Note: 
+
+1. An assistant should be created at the Project level
+	- Determine the project whose assistant you want to create
+	- Execute Command: ExtractCsFiles('/path/to/proj/directory')
+	- The above command creates artifacts in the current working directory
+	- Navigate to the generated artifacts directory and remove any unwanted files. Limit to 20 files at max
+2. Execute command: OpenAICreateCsProjectAssistant '/path/to/artifacts/directory'
+
+
+
+Steps:
+1. Navigate to a directory containing the project you want to create an assistant for
+2. Execute command: ExtractCsFiles('/path/to/proj/directory')
+	- should generate a directory containing all the .cs files in the project
+	- directory should be found in the current working directory with a '_project' suffix
+3. Group the generated files by namespace by executing command: GroupCsFilesByNamespace('/path/to/extracted/files/directory')
+	- should overwrite the directory containing the extracted files
+	- files should be grouped by namespace
+
+4. Execute command: OpenAICreateCsProjectAssistant '/path/to/grouped/files/directory'
+	- should generate 'openai_create_project_assistant_output.json' file containing the assistant id
+	- should generate 'openai_upload_assistant_files_output.json' file containing the uploaded files
+5, An artifact file containing the created assistant will be generated in the current working directory.
+6. Generate a Thread Pool by executing command: OpenAICreateAssistantThreadPool <count>
+	- count is the number of threads to be created
+	- should generate a file containing thread ids
+
+7. Create thread message by generating a message payload:
+" {
+"	"threadId": "thrd_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5",
+"	"message": "Hello, I am a message",
+"	"file_id": [optional]
+" }
+
+
+
+
+6. To delete all uploaded files by the CS Project Assistant, execute command: OpenAIDeleteCsProjectAssistantFiles
+'/path/to/uploaded/assistant/files/directory'
+7, To Delete all assistant files regardless of the process that created them, execute command: OpenAIDeleteAllAssistantFiles
+8. To delete the created assistant, execute command: OpenAIDeleteAssistant 'assistant_id'. The assistant_id is found in the assistant artifact file generated in step 5.

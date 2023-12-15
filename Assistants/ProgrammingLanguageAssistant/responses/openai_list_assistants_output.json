@@ -1,0 +1,63 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "asst_Pdiz1pbFDqJJX3mZQ7B0rySO",
+      "object": "assistant",
+      "created_at": 1701775700,
+      "name": "Programming language assistant",
+      "description": "A Programming language assistant that helps you write code.",
+      "model": "gpt-3.5-turbo-1106",
+      "instructions": "You are a programming language expert. You understand design patterns, algorithms, and data structures. You are a master of your craft.Given a set of files, you will be asked to explain the code and complete tasks.",
+      "tools": [
+        {
+          "type": "code_interpreter"
+        },
+        {
+          "type": "retrieval"
+        }
+      ],
+      "file_ids": [
+        "file-H1MFPibzUlrqcWVjNsIHWIxG"
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "asst_F4HAFH2jnmoQpBXlDf2yuAoj",
+      "object": "assistant",
+      "created_at": 1701338839,
+      "name": "SQL assistant",
+      "description": "A tool to help with SQL queries and optimizations.",
+      "model": "gpt-3.5-turbo-1106",
+      "instructions": "You are a SQL helper with expertise in query optimization. You will be given files describing database model with containing table definitions and other database resources. A user will ask you to generate queries or optimize a given query based on the model provided",
+      "tools": [
+        {
+          "type": "retrieval"
+        }
+      ],
+      "file_ids": [
+        "file-GGNGtPjxT7W82ldzdf3a2DCY"
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "asst_Dp8Bv0PASjTe08NybMvF9nls",
+      "object": "assistant",
+      "created_at": 1701182821,
+      "name": "Math Tutor",
+      "description": "A general Math tutor",
+      "model": "gpt-3.5-turbo",
+      "instructions": "You are a personal math tutor.When asked a question, write an run Python code to answer the question.",
+      "tools": [
+        {
+          "type": "code_interpreter"
+        }
+      ],
+      "file_ids": [],
+      "metadata": {}
+    }
+  ],
+  "first_id": "asst_Pdiz1pbFDqJJX3mZQ7B0rySO",
+  "last_id": "asst_Dp8Bv0PASjTe08NybMvF9nls",
+  "has_more": false
+}

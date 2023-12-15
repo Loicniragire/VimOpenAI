@@ -1,0 +1,17 @@
+/Users/loicniragire/OpenAI/Completions/merge/bin/Debug/net7.0/merge
+/Users/loicniragire/OpenAI/Completions/merge/bin/Debug/net7.0/merge.deps.json
+/Users/loicniragire/OpenAI/Completions/merge/bin/Debug/net7.0/merge.runtimeconfig.json
+/Users/loicniragire/OpenAI/Completions/merge/bin/Debug/net7.0/merge.dll
+/Users/loicniragire/OpenAI/Completions/merge/bin/Debug/net7.0/merge.pdb
+/Users/loicniragire/OpenAI/Completions/merge/bin/Debug/net7.0/Newtonsoft.Json.dll
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.csproj.AssemblyReference.cache
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.GeneratedMSBuildEditorConfig.editorconfig
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.AssemblyInfoInputs.cache
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.AssemblyInfo.cs
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.csproj.CoreCompileInputs.cache
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.csproj.CopyComplete
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.dll
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/refint/merge.dll
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.pdb
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/merge.genruntimeconfig.cache
+/Users/loicniragire/OpenAI/Completions/merge/obj/Debug/net7.0/ref/merge.dll

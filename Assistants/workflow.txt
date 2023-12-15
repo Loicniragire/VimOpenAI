@@ -1,0 +1,23 @@
+Steps for running assistant:
+
+1. Go the to project directory contain the project files to run the assistant.
+	- command: echo SetupProjectAssistant 'path to project directory'
+	- should initialize the following global variables and create corresponding directories:
+		g:OPENAI_PROJECT_HOME_DIR
+		g:OPENAI_REQUESTS_DIR
+		g:OPENAI_RESPONSES_DIR
+		g:OPENAI_OUTPUT_DIR
+		g:OPENAI_SOURCE_DIR
+	- g:OPENAI_REQUESTS_DIR should contain a sample json message.
+
+2. Copy the sample json message from the g:OPENAI_REQUESTS_DIR and create a new message by specifying a classname and a message:
+
+3. Command:  CreateAssistantThreadMessageByClassname('path to message request json file')
+	- This should generate a json file containing thread message for execution.
+	- The message will be generated in the g:OPENAI_REQUESTS_DIR directory.
+
+4. Execute thread message:
+	- Command: ExecuteAssistantThreadMessage('path to thread message json file')
+	- This should generate a json file containing the response from the assistant.
+	- The response will be generated in the g:OPENAI_RESPONSES_DIR directory.
+

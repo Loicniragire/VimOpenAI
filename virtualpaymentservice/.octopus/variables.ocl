@@ -1,0 +1,399 @@
+variable "_AppPool.User.Base" {
+    value "svc-VpaySrv" {}
+}
+
+variable "AppPool.Name" {
+    value "App_VirtualPaymentService" {}
+}
+
+variable "AppPool.StartMode" {
+    value "AlwaysRunning" {}
+}
+
+variable "AppPool.IdleTimeoutMinutes" {
+    value "0" {}
+}
+
+variable "VirtualPath" {
+    value "/VirtualPaymentService" {}
+}
+
+variable "HealthCheckUrl" {
+    value "https://#{Octopus.Machine.Name}.stormwind.local/#{Octopus.Project.Name}/api/health" {}
+}
+
+variable "Slack.Channel" {
+    value "#pay-processing-builds" {}
+}
+
+variable "OneBoxTenant"{
+    value "#{Octopus.Deployment.Tenant.Name | Replace OneBox}" {}
+}
+
+variable "AppSettings:ENV" {
+    value "DEV" {
+        environment = ["dev"]
+    }
+
+    value "RC" {
+        environment = ["rcp"]
+    }
+
+    value "PROD" {
+        environment = ["prd"]
+    }
+
+    value "QAENV#{OneBoxTenant | Replace QA}" {
+        environment = ["qas"]
+    }
+
+    value "DEMO" {
+        environment = ["dmo"]
+    }
+}
+
+variable "Logging:MinimumLevel" {
+    value "Info" {
+        environment = ["prd", "rcp", "dmo"]
+    }
+
+    value "Debug" {
+        environment = ["dev", "qas"]
+    }
+}
+
+variable "Logging:Targets:1:Args:PathFormat" {
+    value "D:\\ProgAppLogs\\{Environment}\\{ApplicationName}_{Date}.log" {
+        environment = ["prd", "rcp", "dmo", "qas", "dev"]
+    }
+}
+
+variable "SecretManagement:ServerUrl" {
+    value "prdappcjf.proginternal.net" {
+        environment = ["prd"]
+    }
+}
+
+variable "SecretManagement:SecretProvider" {
+    value "Conjur" {
+        environment = ["prd"]
+    }
+}
+
+variable "SecretManagement:ApiKeyUsernameBase" {
+    value "QA/SQ_VIRTUALPAYMENTSERVICE" {
+        environment = ["qas"]
+    }
+
+    value "Demo/SM_VIRTUALPAYMENTSERVICE" {
+        environment = ["dmo"]
+    }
+
+    value "RC/SR_VIRTUALPAYMENTSERVICE" {
+        environment = ["rcp"]
+    }
+
+    value "Prod/SD_VIRTUALPAYMENTSERVICE" {
+        environment = ["prd"]
+    }
+}
+
+variable "SecretManagement:SafeName" {
+    value "SD_VIRTUALPAYMENTSERVICE" {
+        environment = ["dev"]
+    }
+
+    value "SQ_VIRTUALPAYMENTSERVICE" {
+        environment = ["qas"]
+    }
+
+    value "SM_VIRTUALPAYMENTSERVICE" {
+        environment = ["dmo"]
+    }
+
+    value "SR_VIRTUALPAYMENTSERVICE" {
+        environment = ["rcp"]
+    }
+
+    value "SP_VIRTUALPAYMENTSERVICE" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaPing" {
+    value "ping" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaProvisionApplePay" {
+    value "digitalwalletprovisionrequests/applepay" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaProvisionGooglePay" {
+    value "digitalwalletprovisionrequests/androidpay" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaGetDigitalWalletTokensByCardToken" {
+    value "digitalwallettokens/card/{cardToken}?count={tokenLimit}" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaTransitionDigitalWalletToken" {
+    value "digitalwallettokentransitions" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaUsers" {
+    value "users" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaTransitionCard" {
+    value "cardtransitions" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaCreateCard" {
+    value "cards?show_pan=true&show_cvv_number=true" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaControlToken" {
+    value "pins/controltoken" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:Endpoints:MarqetaSetPin" {
+    value "pins" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:CardProvider" {
+    value "Marqeta" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:ProductType" {
+    value "1" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:BaseUrl" {
+    value "https://progressive-meta-dev.marqeta.com/v3/" {
+        environment = ["dev", "qas", "rcp", "dmo"]
+    }
+
+    value "https://progressive-meta-api.marqeta.com/v3/" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:SetInitalPin" {
+    value "false" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:VirtualCardProductToken" {
+    value "48d21be3-2021-479b-bad4-2163a1fa9226" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:ApiUserKeyName" {
+    value "MarqetaCommercialCredentials/username" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:0:ApiPasswordKeyName" {
+    value "MarqetaCommercialCredentials/password" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:CardProvider" {
+    value "Marqeta" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:ProductType" {
+    value "2" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:BaseUrl" {
+    value "https://progressivecon-dev.marqeta.com/v3/" {
+        environment = ["dev", "qas", "rcp", "dmo"]
+    }
+
+    value "https://progressivecon-api.marqeta.com/v3/" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:SetInitalPin" {
+    value "true" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:VirtualCardProductToken" {
+    value "progressivecon_virtual_card" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:ApiUserKeyName" {
+    value "MarqetaConsumerCredentials/username" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:ApiPasswordKeyName" {
+    value "MarqetaConsumerCredentials/password" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:CardProviderSettings:1:MarqetaAccountHolderGroupToken" {
+    value "no_kyc_required" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:SecretServerGetSecretRetryLimit" {
+    value "2" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:UseMockedMobileWalletResponse" {
+    value "false" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:DigitalWalletTokenCountLimit" {
+    value "100" {
+        environment = ["prd"]
+    }
+}
+
+variable "AppSettings:MarqetaWalletTransitionOverrideErrorCodes:0" {
+    value "400669" {
+        environment = ["prd"]
+    }
+}
+
+variable "ConnectionStrings:VirtualPayment" {
+    value "Data Source=pf2-sql-qas.stormwind.local;Initial Catalog=VirtualPayment;Integrated Security=true" {
+        environment = ["qas"]
+    }
+
+    value "Data Source=pf2-sql-rcp.stormwind.local;Initial Catalog=VirtualPayment;Integrated Security=true" {
+        environment = ["rcp"]
+    }
+
+    value "Data Source=pf2-sql-dmo.stormwind.local;Initial Catalog=VirtualPayment;Integrated Security=true" {
+        environment = ["dmo"]
+    }
+
+    value "Data Source=pf2-sql-prd.stormwind.local;Initial Catalog=VirtualPayment;Integrated Security=true" {
+        environment = ["prd"]
+    }
+}
+
+variable "ConnectionStrings:Progressive" {
+    value "Data Source=pf-sql-qas.stormwind.local;Initial Catalog=Progressive;Integrated Security=true" {
+        environment = ["qas"]
+    }
+
+    value "Data Source=pf-sql-rcp.stormwind.local;Initial Catalog=Progressive;Integrated Security=true" {
+        environment = ["rcp"]
+    }
+
+    value "Data Source=pf-sql-dmo.stormwind.local;Initial Catalog=Progressive;Integrated Security=true" {
+        environment = ["dmo"]
+    }
+
+    value "Data Source=pf-sql-prd.stormwind.local;Initial Catalog=Progressive;Integrated Security=true" {
+        environment = ["prd"]
+    }
+}
+
+variable "ApplicationInsights:InstrumentationKey" {
+    value "64ac1c72-aa4a-4bd9-8660-565e8d97d3a7" {
+        environment = ["qas"]
+    }
+
+    value "21733303-7502-4047-82c6-a8a2016e57a4" {
+        environment = ["rcp"]
+    }
+
+    value "3752f6eb-32f8-4370-9435-0f2f5005b6c5" {
+        environment = ["dmo"]
+    }
+
+    value "3e8294af-52a0-435d-b512-9f37e5398d00" {
+        environment = ["prd"]
+    }
+}
+
+variable "LdClientConfiguration:SdkKey" {
+    value "sdk-78ade835-1ca5-4068-a5bd-8db0fe8aa366" {
+        environment = ["prd"]
+    }
+}
+
+variable "LdClientConfiguration:StreamUri" {
+    value "https://qasappldr.proginternal.net" {
+        environment = ["qas"]
+    }
+
+    value "https://rcpappldr.proginternal.net" {
+        environment = ["rcp"]
+    }
+
+    value "https://dmoappldr.proginternal.net" {
+        environment = ["dmo"]
+    }
+
+    value "https://prdappldr.proginternal.net" {
+        environment = ["prd"]
+    }
+}
+
+variable "LdClientConfiguration:EventsUri" {
+    value "https://qasappldr.proginternal.net" {
+        environment = ["qas"]
+    }
+
+    value "https://rcpappldr.proginternal.net" {
+        environment = ["rcp"]
+    }
+
+    value "https://dmoappldr.proginternal.net" {
+        environment = ["dmo"]
+    }
+
+    value "https://prdappldr.proginternal.net" {
+        environment = ["prd"]
+    }
+}

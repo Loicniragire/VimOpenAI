@@ -1,0 +1,22 @@
+{
+  "id": "msg_K9rXkhbivXupfTBjPIquJuTP",
+  "object": "thread.message",
+  "created_at": 1702554023,
+  "thread_id": "thread_EiONxNXgnQRWd21P90SiBG3p",
+  "role": "user",
+  "content": [
+    {
+      "type": "text",
+      "text": {
+        "value": "What endpoints does this controller expose? Please list them along with their HTTP methods.",
+        "annotations": []
+      }
+    }
+  ],
+  "file_ids": [
+    "file-JNzPBm0e55YlhyHcRP4pb7yb"
+  ],
+  "assistant_id": null,
+  "run_id": null,
+  "metadata": {}
+}

@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "OSxoftyqsXz9NjmbBS5WWNaDv9BdpcRWV8/mRqXo4+5TW9g+/cT2da/E9UQsxcN7CK6L5lo+ZtwKd9VmkFdQpQ==",
+  "success": true,
+  "projectFilePath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj",
+  "expectedPackageFiles": [
+    "/Users/loicniragire/.nuget/packages/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "/Users/loicniragire/.nuget/packages/netstandard.library/2.0.3/netstandard.library.2.0.3.nupkg.sha512",
+    "/Users/loicniragire/.nuget/packages/system.data.datasetextensions/4.5.0/system.data.datasetextensions.4.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}

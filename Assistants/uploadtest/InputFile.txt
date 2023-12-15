@@ -1,0 +1,2 @@
+This is a sample input file to be used for testing purposes. The file will be upload to OpenAI for use by Assistants.
+

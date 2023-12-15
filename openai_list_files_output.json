@@ -1,0 +1,66 @@
+{
+  "object": "list",
+  "has_more": false,
+  "data": [
+    {
+      "object": "file",
+      "id": "file-Um8bMTlgtF5NdOhujuVnFSA3",
+      "purpose": "assistants",
+      "filename": "VirtualPaymentService.txt",
+      "bytes": 9898,
+      "created_at": 1702582333,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-GpldBwlU1mEzFKMsLyXIuEg5",
+      "purpose": "assistants",
+      "filename": "VirtualPaymentService.HealthChecks.txt",
+      "bytes": 4377,
+      "created_at": 1702582331,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-ZYcssntGmzdGCNVVCaDczRZg",
+      "purpose": "assistants",
+      "filename": "VirtualPaymentService.FeatureFlag.txt",
+      "bytes": 285,
+      "created_at": 1702582330,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-dn6eAfUpg4isVoEF6AV7rar9",
+      "purpose": "assistants",
+      "filename": "VirtualPaymentService.Exceptions.txt",
+      "bytes": 2525,
+      "created_at": 1702582328,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-bCfQsR1i7UK3aU82xBNmkEgS",
+      "purpose": "assistants",
+      "filename": "VirtualPaymentService.Controllers.txt",
+      "bytes": 52576,
+      "created_at": 1702582326,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-jY6zF8ZB5nRXP6T0Jz92A7oY",
+      "purpose": "assistants",
+      "filename": "VirtualPaymentService.AssemblyInfo.txt",
+      "bytes": 986,
+      "created_at": 1702582324,
+      "status": "processed",
+      "status_details": null
+    }
+  ]
+}

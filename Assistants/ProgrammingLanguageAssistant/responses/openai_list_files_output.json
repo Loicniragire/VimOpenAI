@@ -1,0 +1,46 @@
+{
+  "object": "list",
+  "has_more": false,
+  "data": [
+    {
+      "object": "file",
+      "id": "file-H1MFPibzUlrqcWVjNsIHWIxG",
+      "purpose": "assistants",
+      "filename": "out.zip",
+      "bytes": 109141,
+      "created_at": 1701807797,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-fC0S3bClxXGYOIiJ7szWQJrE",
+      "purpose": "assistants",
+      "filename": "BugAnalysis.zip",
+      "bytes": 10814344,
+      "created_at": 1701777350,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-GGNGtPjxT7W82ldzdf3a2DCY",
+      "purpose": "assistants",
+      "filename": "SoftwareAnalysis.txt",
+      "bytes": 17728,
+      "created_at": 1701304371,
+      "status": "processed",
+      "status_details": null
+    },
+    {
+      "object": "file",
+      "id": "file-axCWB8mqcPCzsZEURqX7fFJ6",
+      "purpose": "assistants",
+      "filename": "InputFile.txt",
+      "bytes": 119,
+      "created_at": 1701186759,
+      "status": "processed",
+      "status_details": null
+    }
+  ]
+}

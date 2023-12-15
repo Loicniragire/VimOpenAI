@@ -1,0 +1,55 @@
+{
+  "manifest_version": "1.0",
+  "version": "1.0.0",
+  "configurationItemSysId": "bf0bfde91be43850fe43db56dc4bcb73",
+  "attestations": [
+    {
+      "name": "branching_strategy",
+      "payload": {
+        "value": "trunk-based",
+        "attestor": "payments@progleasing.com",
+        "updated_on": "2023-10-13"
+      }
+    },
+    {
+      "name": "auto_provisioning",
+      "payload": {
+        "value": "other",
+        "attestor": "payments@progleasing.com",
+        "updated_on": "2023-10-13"
+      }
+    },
+    {
+      "name": "monitoring_instrument",
+      "payload": {
+        "value": "splunk",
+        "attestor": "payments@progleasing.com",
+        "updated_on": "2023-10-13"
+      }
+    },
+    {
+      "name": "zero_downtime_release",
+      "payload": {
+        "value": "https://progfin.atlassian.net/wiki/spaces/DP/pages/2382430475/Zero+Downtime+Releases",
+        "attestor": "payments@progleasing.com",
+        "updated_on": "2023-10-13"
+      }
+    },
+    {
+      "name": "rollback_plan",
+      "payload": {
+        "value": "https://progfin.atlassian.net/wiki/spaces/DP/pages/2382299444/Automated+Rollbacks",
+        "attestor": "payments@progleasing.com",
+        "updated_on": "2023-10-13"
+      }
+    },
+    {
+      "name": "post_release_validation",
+      "payload": {
+        "value": "https://progfin.atlassian.net/wiki/spaces/DP/pages/2382135785/Post+Release+Validation",
+        "attestor": "payments@progleasing.com",
+        "updated_on": "2023-10-13"
+      }
+    }
+  ]
+}

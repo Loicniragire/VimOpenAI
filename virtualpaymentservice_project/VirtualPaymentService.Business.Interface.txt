@@ -1,0 +1,259 @@
+using System.Threading.Tasks;
+using VirtualPaymentService.Model.Enums;
+using VirtualPaymentService.Model.Requests;
+using VirtualPaymentService.Model.Responses;
+
+namespace VirtualPaymentService.Business.Interface
+{
+    /// <summary>
+    /// Interface that all VCardProviders should inherit from
+    /// </summary>
+    public interface ICardProvider
+    {
+        /// <summary>
+        /// Readonly name of the provider (E.g. "Marqeta").
+        /// </summary>
+        public VPaymentProvider Provider { get; }
+
+        /// <summary>
+        /// Method which pings the provider. 
+        /// This method will be used to determine whether the service state is healthy or unhealthy.
+        /// </summary>
+        /// <returns><see cref="bool"/>. If false the service will be unhealthy.</returns>
+        public Task<bool> IsHealthyAsync();
+
+        /// <summary>
+        /// Creates a new virtual card on the provider network.
+        /// </summary>
+        /// <returns><see cref="VirtualCardResponse"/></returns>
+        public Task<VirtualCardResponse> CreateCardAsync(VirtualCardRequest request, ProductType productType);
+
+        /// <summary>
+        /// Cancels the given vcard on the provider network.
+        /// </summary>
+        /// <param name="vCard">The vCard to cancel.</param>
+        /// <param name="productType">Product type for which the virtual card was created with.</param>
+        /// <returns><see cref="bool"/> designating if the card was cancelled successfully.</returns>
+        public Task<bool> CancelCardAsync(CancelVCardRequest vCard, ProductType productType);
+
+        /// <summary>
+        /// Gets the card user properties set on the provider network.
+        /// </summary>
+        /// <param name="userToken">Unique user identifier on provider network.</param>
+        /// <param name="productType">Product type of the card related to the user.</param>
+        /// <returns><see cref="CardUserResponse"/></returns>
+        Task<CardUserResponse> GetCardUserAsync(string userToken, ProductType productType);
+    }
+}
+using System.Threading.Tasks;
+using VirtualPaymentService.Model.DTO;
+using VirtualPaymentService.Model.Enums;
+using VirtualPaymentService.Model.Requests;
+using VirtualPaymentService.Model.Responses;
+
+namespace VirtualPaymentService.Business.Interface
+{
+    /// <summary>
+    /// Interface for Digital Wallet providers. Implements <see cref="ICardProvider"/>.
+    /// </summary>
+    public interface IDigitalWalletProvider
+    {
+        /// <summary>
+        /// Sends a provisioning request to the provider and returns AppleWallet tokenization data.
+        /// </summary>
+        /// <param name="data">Payload for requesting wallet tokenization data from Apple.</param>
+        /// <param name="productType">Product type for which the virtual card was created with.</param>
+        /// <returns>Task of <see cref="ApplePayTokenizationResponse"/>. ApplePayTokenizationResponse.Success will be false if the request failed.</returns>
+        Task<ApplePayTokenizationResponse> GetApplePayTokenizationDataAsync(ApplePayProvisioningData data, ProductType productType);
+
+        /// <summary>
+        /// Sends a provisioning request to the provider and returns Google Wallet tokenization data.
+        /// </summary>
+        /// <param name="data">Payload for requesting wallet tokenization data from Google.</param>
+        /// <param name="productType">Product type for which the virtual card was created with.</param>
+        /// <returns>Task of <see cref="GooglePayTokenizationResponse"/>.</returns>
+        Task<GooglePayTokenizationResponse> GetGooglePayTokenizationDataAsync(GooglePayProvisioningData data, ProductType productType);
+
+        /// <summary>
+        /// Queries provider to locate all digital wallet tokens for given card token.
+        /// </summary>
+        /// <param name="cardToken">Card token to search against.</param>
+        /// <param name="productType">Product type for which the virtual card was created with.</param>
+        /// <returns>Task of <see cref="DigitalWalletTokenResponse"/>.</returns>
+        Task<DigitalWalletTokenResponse> GetDigitalWalletTokensByVCardAsync(string cardToken, ProductType productType);
+
+        /// <summary>
+        /// Transitions digital wallet token to the transition status supplied and returns the digital wallet transition token.
+        /// </summary>
+        /// <param name="request">Contains the wallet token, new transition status, and reason code required for request to wallet provider</param>
+        /// <param name="productType">Product type for which the virtual card was created with.</param>
+        /// <returns><see cref="DigitalWalletTokenTransitionResponse"/></returns>
+        Task<DigitalWalletTokenTransitionResponse> TransitionDigitalWalletTokenAsync(DigitalWalletTokenTransitionRequest request, ProductType productType);
+
+        /// <summary>
+        /// Updates user properties at the card provider.
+        /// </summary>
+        /// <param name="userToken">The unique token/ID of the user on the card provider network.</param>
+        /// <param name="request">Properties to update for the user.</param>
+        /// <param name="productType">Product type for which the virtual card was created with.</param>
+        /// <returns><see cref="CardUserUpdateResponse"/> values present for the user at the card provider after the update.</returns>
+        public Task<CardUserUpdateResponse> UpdateCardUserAsync(string userToken, CardUserUpdateRequest request, ProductType productType);
+    }
+}
+using System.Diagnostics.CodeAnalysis;
+using System.Threading.Tasks;
+using VirtualPaymentService.Model.Requests;
+using VirtualPaymentService.Model.Responses;
+
+namespace VirtualPaymentService.Business.Interface
+{
+    [SuppressMessage("Minor Code Smell", "S101:Types should be named in PascalCase", Justification = "Reviewed")]
+    public interface IJITDecisionProvider
+    {
+        Task<JITFundingResponse> ProcessJITDecisionAsync(JITFundingRequest request);
+    }
+}
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using VirtualPaymentService.Model.DTO;
+using VirtualPaymentService.Model.Requests;
+using VirtualPaymentService.Model.Responses;
+
+namespace VirtualPaymentService.Business.Interface
+{
+    public interface ILeaseStoreDataProvider
+    {
+        LeaseStoreDataResponse GetLeaseStoreData(LeaseStoreDataRequest request);
+        MarqetaStateResponse GetMarqetaStateAbbreviation(int stateId);
+
+        Task<IEnumerable<StoreCustomField>> GetStoreCustomFields(int leaseId);
+    }
+}
+namespace VirtualPaymentService.Business.Interface
+{
+    /// <summary>
+    /// Interface to help with dependency injection resolution.
+    /// </summary>
+    public interface IMarqetaCommercialService : IMarqetaService
+    {
+    }
+}
+namespace VirtualPaymentService.Business.Interface
+{
+    /// <summary>
+    /// Interface to help with dependency injection resolution.
+    /// </summary>
+    public interface IMarqetaConsumerService : IMarqetaService
+    {
+    }
+}
+using System.Threading.Tasks;
+using VirtualPaymentService.Model.DTO.Marqeta;
+using VirtualPaymentService.Model.Requests.Marqeta;
+using VirtualPaymentService.Model.Responses;
+using VirtualPaymentService.Model.Responses.Marqeta;
+
+namespace VirtualPaymentService.Business.Interface
+{
+    public interface IMarqetaService
+    {
+        /// <summary>
+        /// Hits Marqeta ping endpoint.
+        /// </summary>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaPingResponse"/></returns>
+        Task<MarqetaPingResponse> PingAsync();
+
+        /// <summary>
+        /// Uses the Marqeta API to provision a card for ApplePay
+        /// and gets tokenization data for the digital Wallet.
+        /// </summary>
+        /// <param name="request">Data provided by Apple to use in the request.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaProvisionApplePayResponse"/></returns>
+        Task<MarqetaProvisionApplePayResponse> PostProvisionApplePayAsync(MarqetaProvisionApplePayRequest request);
+
+        /// <summary>
+        /// Uses the Marqeta API to provision a card for Google Pay
+        /// and gets tokenization data for the digital wallet.
+        /// </summary>
+        /// <param name="request">Data provided by Google to use in the request.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaProvisionGooglePayResponse"/></returns>
+        Task<MarqetaProvisionGooglePayResponse> PostProvisionGooglePayAsync(MarqetaProvisionGooglePayRequest request);
+
+        /// <summary>
+        /// Uses the Marqeta API to search for digital wallet tokens for card passed in.
+        /// </summary>
+        /// <remarks>Calls the Marqeta API https://www.marqeta.com/docs/core-api/digital-wallets-management#_list_digital_wallet_tokens_for_card </remarks>
+        /// <param name="cardToken">The card token to search against.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaDigitalWalletTokensForCardResponse"/></returns>
+        Task<MarqetaDigitalWalletTokensForCardResponse> GetDigitalWalletTokensByCardToken(string cardToken);
+
+        /// <summary>
+        /// Uses Marqeta API to transition a digital wallet token state to Active(GREEN), Suspended(YELLOW), Terminated(RED)
+        /// </summary>
+        /// <param name="request">Data included for specifying wallet token and transition state</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaWalletTokenTransitionResponse"/></returns>
+        Task<MarqetaWalletTokenTransitionResponse> PostDigitalWalletTokenTransitionAsync(MarqetaWalletTokenTransitionRequest request);
+
+        /// <summary>
+        /// Uses Marqeta API to update provided properties of the user that would be associated to a virtual card.
+        /// </summary>
+        /// <remarks>Marqeta API https://www.marqeta.com/docs/core-api/users#_update_user </remarks>
+        /// <param name="userToken">Unique Marqeta user token, for virtual cards token value is LeaseId.</param>
+        /// <param name="request">User properties to update at Marqeta.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaUserResponse"/></returns>
+        Task<MarqetaUserResponse> PutUserAsync(string userToken, MarqetaUserPutRequest request);
+
+        /// <summary>
+        /// Uses Marqeta API to create a user that will be associated to the virtual card.
+        /// </summary>
+        /// <remarks>Marqeta API https://www.marqeta.com/docs/core-api/users#_create_user </remarks>
+        /// <param name="request">Properties to create user at Marqeta.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaUserResponse"/></returns>
+        Task<MarqetaUserResponse> PostUserAsync(MarqetaUserPostRequest request);
+
+        /// <summary>
+        /// Uses Marqeta API to get the current user properties.
+        /// </summary>
+        /// <remarks>
+        /// Marqeta API https://www.marqeta.com/docs/core-api/users#getUsersToken
+        /// </remarks>
+        /// <param name="userToken">Unique Marqeta user token, for virtual cards token value is LeaseId.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaUserResponse"/></returns>
+        Task<MarqetaUserResponse> GetUserAsync(string userToken);
+
+        /// <summary>
+        /// Uses Marqeta API to create virtual card.
+        /// </summary>
+        /// <remarks>Marqeta API https://www.marqeta.com/docs/core-api/cards#postCards </remarks>
+        /// <param name="request">Properties to create card at Marqeta.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaCardResponse"/></returns>
+        Task<MarqetaCardResponse> PostCardAsync(MarqetaCardRequest request);
+
+        /// <summary>
+        /// Uses Marqeta API to transition a vcard state to Active, Suspended, Terminated.
+        /// Will not throw if the VCard is already in the provided status.
+        /// </summary>
+        /// <param name="request">Data included for specifying vcard and transition state</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaTransitionCardResponse"/></returns>
+        Task<MarqetaTransitionCardResponse> PostTransitionVCardAsync(MarqetaTransitionCardRequest request);
+
+        /// <summary>
+        /// Creates a control token on network to allow subsequent pin operation using generated token.
+        /// </summary>
+        /// <remarks>
+        /// Marqeta API https://www.marqeta.com/docs/core-api/pins#postPinsControltoken
+        /// </remarks>
+        /// <param name="request">The card and pin token type to generate.</param>
+        /// <returns><see cref="Task"/> of <see cref="MarqetaPinControlTokenResponse"/></returns>
+        Task<MarqetaPinControlTokenResponse> PostPinControlTokenAsync(MarqetaPinControlTokenRequest request);
+
+        /// <summary>
+        /// Sets or updates the PIN for a card.
+        /// </summary>
+        /// <remarks>
+        /// Marqeta API https://www.marqeta.com/docs/core-api/pins#putPins
+        /// </remarks>
+        /// <param name="request">The control token and PIN number to set.</param>
+        Task PutPinAsync(MarqetaPinRequest request);
+    }
+}

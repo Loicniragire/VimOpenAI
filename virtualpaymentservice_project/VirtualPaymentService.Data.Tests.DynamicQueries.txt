@@ -1,0 +1,357 @@
+using NUnit.Framework;
+using VirtualPaymentService.Data.DynamicQueries;
+
+namespace VirtualPaymentService.Data.Tests.DynamicQueries
+{
+    [TestFixture]
+    public class DynamicQueryBuilderBaseTests
+    {
+        #region Helpers
+        private class TestDynamicQueryBuilder : DynamicQueryBuilderBase
+        {
+            public new void AddParameterizedCondition(string columnName, string conditionalOperator, object value, string? paramName = null, bool overwriteParam = false)
+            {
+                base.AddParameterizedCondition(columnName, conditionalOperator, value, paramName, overwriteParam);
+            }
+        }
+
+        private static TestDynamicQueryBuilder GetQueryBuilder()
+        {
+            return new TestDynamicQueryBuilder();
+        }
+        #endregion Helpers
+
+        [Test]
+        public void BuildParameterizedQuery_DoesNotAddWhereClause_When_NoParametersAreProvided()
+        {
+            // Arrange
+            var baseQuery = " SELECT * FROM Progressive.VPay.VCard ";
+            var expected = string.Concat(baseQuery.Trim(), ";");
+
+            var queryBuilder = GetQueryBuilder();
+
+            // Act
+            var actual = queryBuilder.BuildParameterizedQuery(baseQuery);
+
+            // Assert
+            Assert.That(actual.RawSql, Is.EqualTo(expected));
+        }
+
+        [TestCase("TestColumn1", ConditionalOperator.EQ)]
+        [TestCase("TestColumn2", ConditionalOperator.GTEQ)]
+        [TestCase("TestColumn3", ConditionalOperator.LTEQ)]
+        [TestCase("TestColumn4", ConditionalOperator.IN)]
+        [TestCase("TestColumn5", ConditionalOperator.LIKE)]
+        [TestCase("TestColumn1", ConditionalOperator.EQ, "TestParamName1")]
+        [TestCase("TestColumn2", ConditionalOperator.GTEQ, "TestParamName2")]
+        [TestCase("TestColumn3", ConditionalOperator.LTEQ, "TestParamName3")]
+        [TestCase("TestColumn4", ConditionalOperator.IN, "TestParamName4")]
+        [TestCase("TestColumn5", ConditionalOperator.LIKE, "TestParamName5")]
+        public void BuildParameterizedQuery_AddsParameterizedConditions_WithAppropiateParamNames
+            (
+            string columnName,
+            string conditionalOperator,
+            string? paramName = null
+            )
+        {
+            // Arrange
+            var expected = $" WHERE {columnName} {conditionalOperator} @{paramName ?? columnName};";
+            var queryBuilder = GetQueryBuilder();
+            queryBuilder.AddParameterizedCondition(columnName, conditionalOperator, new { }, paramName);
+
+            // Act
+            var actual = queryBuilder.BuildParameterizedQuery(string.Empty);
+
+            // Assert
+            Assert.That(actual.RawSql, Is.EqualTo(expected));
+        }
+
+        [TestCase(false, TestName = "AddParameterizedCondition_Succeeds_OnOverwrite_When_OverwriteIsTrue")]
+        [TestCase(true, TestName = "AddParameterizedCondition_Throws_OnOverwrite_When_OverwriteIsFalse")]
+        public void AddParameterizedCondition_HandlesOverwriteParam(bool allowOverwrite)
+        {
+            // Arrange
+            var paramName = "ColName";
+            var queryBuilder = GetQueryBuilder();
+            queryBuilder.AddParameterizedCondition(paramName, ConditionalOperator.EQ, new { });
+
+            // Act & Assert
+            if (allowOverwrite)
+            {
+                Assert.DoesNotThrow(
+                    () => queryBuilder.AddParameterizedCondition(paramName, "=>", new { }, overwriteParam: allowOverwrite));
+            }
+            else
+            {
+                Assert.Throws<ArgumentException>(
+                    () => queryBuilder.AddParameterizedCondition(paramName, "=>", new { }, overwriteParam: allowOverwrite));
+            }
+        }
+
+        [Test]
+        public void BuildParameterizedQuery_WorksWithMultipleParameters()
+        {
+            // Arrange
+            var where = "WHERE";
+            var condition1 = new DynamicCondition(ConditionalOperator.EQ, "someValue", "column1");
+            var condition2 = new DynamicCondition(ConditionalOperator.IN, new List<int>(), "column2");
+            var condition3 = new DynamicCondition(ConditionalOperator.LTEQ, 64, "column3");
+            var conditions = new List<DynamicCondition>
+            {
+                { condition1 },
+                { condition2 },
+                { condition3 },
+            };
+
+
+            var queryBuilder = GetQueryBuilder();
+            var conditionDictionary = new Dictionary<string, DynamicCondition>();
+            foreach (var condition in conditions)
+            {
+                conditionDictionary[$"{condition.ColumnName} {condition.ConditionalOperator} @{condition.ColumnName}"] = condition;
+                queryBuilder.AddParameterizedCondition(condition.ColumnName, condition.ConditionalOperator, condition.Value);
+            }
+
+            // Act
+            var query = queryBuilder.BuildParameterizedQuery(string.Empty);
+            var whereConditions = query.RawSql
+                .AsSpan()
+                .Slice(query.RawSql.IndexOf(where) + where.Length)
+                .Trim(';')
+                .ToString()
+                .Split("AND");
+
+            // Assert
+            Assert.That(conditions.Count, Is.EqualTo(whereConditions.Length));
+
+            foreach (var condition in whereConditions)
+            {
+                var dynamicCondition = conditionDictionary[condition.Trim()];
+                var queryParamValue = query.QueryParams[dynamicCondition.ColumnName];
+
+                Assert.That(dynamicCondition.Value, Is.EqualTo(queryParamValue));
+            }
+        }
+    }
+}
+using NUnit.Framework;
+using System.Reflection;
+using VirtualPaymentService.Data.DynamicQueries;
+using VirtualPaymentService.Model.Domain;
+using VirtualPaymentService.Model.Enums;
+
+namespace VirtualPaymentService.Data.Tests.DynamicQueries
+{
+    [TestFixture]
+    public class GetVCardsDynamicQueryTests
+    {
+        private GetVCardsDynamicQuery vCardQuery = new GetVCardsDynamicQuery();
+
+        [SetUp]
+        public void SetUp()
+        {
+            vCardQuery = new GetVCardsDynamicQuery();
+        }
+
+        [TestCaseSource(nameof(TestCases))]
+        public void Setters_Behave_As_Expected(DynamicQueryCase testCase)
+        {
+            // Arrange
+            PropertyInfo prop = typeof(GetVCardsDynamicQuery).GetProperty(testCase.PropertyName ?? string.Empty) ??
+                throw new Exception($"No property by the name of {testCase.PropertyName} was found on type {nameof(GetVCardsDynamicQuery)}");
+
+            var expectedSql = $" WHERE {testCase.ColumnName} {testCase.ConditionalOperator} @{testCase.ParamName};";
+
+            // Act
+            prop.SetValue(vCardQuery, testCase.PropertyValue);
+            var dynamicQuery = vCardQuery.BuildParameterizedQuery(string.Empty);
+
+            // Assert
+            Assert.Multiple(() =>
+            {
+                if (testCase.ShouldUpdateQuery)
+                {
+                    Assert.That(dynamicQuery.RawSql, Is.EqualTo(expectedSql));
+                    Assert.That(dynamicQuery.QueryParams[testCase.ParamName], Is.EqualTo(testCase.ExpectedValue ?? testCase.PropertyValue));
+                }
+                else
+                {
+                    Assert.That(dynamicQuery.RawSql, Is.EqualTo(";"));
+                    Assert.That(dynamicQuery.QueryParams.ContainsKey(testCase.ParamName), Is.False);
+                }
+            });
+        }
+
+        private static IEnumerable<DynamicQueryCase[]> TestCases()
+        {
+            var dateOffset = DateTimeOffset.Now;
+            var mstDateTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(dateOffset, "Mountain Standard Time").DateTime;
+            var utcDateTime = dateOffset.UtcDateTime;
+            var testCases = new List<DynamicQueryCaseParams>
+            {
+                // List cases
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.LeaseIds),
+                        PropertyValue = new List<long>() { { 1234 } },
+                        ColumnName = nameof(VCard.LeaseId),
+                        ParamName = nameof(VCard.LeaseId),
+                        ConditionalOperator = ConditionalOperator.IN,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.ProviderIds),
+                        PropertyValue = new List<VPaymentProvider>() { { VPaymentProvider.Marqeta } },
+                        ColumnName = nameof(VCard.VCardProviderId),
+                        ParamName = nameof(VCard.VCardProviderId),
+                        ConditionalOperator = ConditionalOperator.IN,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.VCardStatusIds),
+                        PropertyValue = new List<CardStatus>() { { CardStatus.Authorized } },
+                        ColumnName = nameof(VCard.VCardStatusId),
+                        ParamName = nameof(VCard.VCardStatusId),
+                        ConditionalOperator = ConditionalOperator.IN,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                // Date cases
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.MinActiveToDate),
+                        PropertyValue = dateOffset,
+                        ExpectedValue = mstDateTime,
+                        ColumnName = nameof(VCard.ActiveToDate),
+                        ParamName = nameof(VCard.ActiveToDate),
+                        ConditionalOperator = ConditionalOperator.GTEQ,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.MinExpirationDate),
+                        PropertyValue = dateOffset,
+                        ExpectedValue = utcDateTime,
+                        ColumnName = nameof(VCard.ExpirationDate),
+                        ParamName = nameof(VCard.ExpirationDate),
+                        ConditionalOperator = ConditionalOperator.GTEQ,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.MinUpdatedDate),
+                        PropertyValue = dateOffset,
+                        ExpectedValue = mstDateTime,
+                        ColumnName = nameof(VCard.UpdatedDate),
+                        ParamName = nameof(VCard.UpdatedDate),
+                        ConditionalOperator = ConditionalOperator.GTEQ,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.MaxUpdatedDate),
+                        PropertyValue = dateOffset,
+                        ExpectedValue = mstDateTime,
+                        ColumnName = nameof(VCard.UpdatedDate),
+                        ParamName = nameof(GetVCardsDynamicQuery.MaxUpdatedDate),
+                        ConditionalOperator = ConditionalOperator.LTEQ,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.MaxExpirationDate),
+                        PropertyValue = dateOffset,
+                        ExpectedValue = utcDateTime,
+                        ColumnName = nameof(VCard.ExpirationDate),
+                        ParamName = nameof(GetVCardsDynamicQuery.MaxExpirationDate),
+                        ConditionalOperator = ConditionalOperator.LTEQ,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+                new DynamicQueryCaseParams {
+                     new DynamicQueryCase
+                     {
+                        PropertyName = nameof(GetVCardsDynamicQuery.MaxActiveToDate),
+                        PropertyValue = dateOffset,
+                        ExpectedValue = mstDateTime,
+                        ColumnName = nameof(VCard.ActiveToDate),
+                        ParamName = nameof(GetVCardsDynamicQuery.MaxActiveToDate),
+                        ConditionalOperator = ConditionalOperator.LTEQ,
+                        ShouldUpdateQuery = true,
+                     }
+                },
+            };
+
+            foreach (var caseParams in testCases)
+            {
+                // Create empty list test cases
+                if (caseParams[0].ConditionalOperator == ConditionalOperator.IN)
+                {
+                    // Create empty enumerable
+                    var newCase = caseParams[0].Clone();
+                    newCase.PropertyValue = newCase.PropertyValue is null ? null : Activator.CreateInstance(newCase.PropertyValue.GetType());
+                    newCase.ShouldUpdateQuery = false;
+
+                    yield return new DynamicQueryCase[] { newCase };
+                }
+                else if (caseParams[0].PropertyValue?.GetType() == typeof(DateTimeOffset))
+                {
+                    var newCase = caseParams[0].Clone();
+                    newCase.PropertyValue = null;
+                    newCase.ShouldUpdateQuery = false;
+
+                    yield return new DynamicQueryCase[] { newCase };
+                }
+
+                // Convert DynamicQueryCaseParams to DynamicQueryCase[]
+                yield return caseParams.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Just used for code clarity
+        /// </summary>
+        public class DynamicQueryCaseParams : List<DynamicQueryCase> { }
+
+        /// <summary>
+        /// Just used for code clarity
+        /// </summary>
+        public class DynamicQueryCase
+        {
+            public string? PropertyName { get; set; }
+
+            public object? PropertyValue { get; set; }
+
+            public object? ExpectedValue { get; set; }
+
+            public string? ColumnName { get; set; }
+
+            public string? ParamName { get; set; }
+
+            public string? ConditionalOperator { get; set; }
+
+            public bool ShouldUpdateQuery { get; set; }
+
+            public DynamicQueryCase Clone()
+            {
+                return (DynamicQueryCase)MemberwiseClone();
+            }
+        }
+    }
+}

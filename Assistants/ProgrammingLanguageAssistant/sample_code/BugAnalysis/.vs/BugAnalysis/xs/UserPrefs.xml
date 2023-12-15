@@ -1,0 +1,35 @@
+﻿<Properties StartupConfiguration="{253E8F06-C768-4A57-B009-435D05D0DE0B}|Default">
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.ItemProperties.BugAnalysis.Api PreferredExecutionTarget="/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="BugAnalysis.DataService/ServiceConfig.cs">
+    <Files>
+      <File FileName="BugAnalysis.DataService/ServiceConfig.cs" Line="38" Column="22" />
+      <File FileName="BugAnalysis.Api/Startup.cs" />
+      <File FileName="Kimado.Core/DataServiceBase.cs" />
+      <File FileName="BugAnalysis.DataService/Models/SoftwareAnalysisContext.cs" Line="87" Column="69" />
+      <File FileName="BugAnalysis.DataService/BugAnalysisContext.cs" Line="31" Column="4" NotebookId="1" />
+      <File FileName="BugAnalysis.DataService/EntityConfigurations/FooEntityTypeConfiguration.cs" NotebookId="1" />
+      <File FileName="BugAnalysis.DataService/EntityConfigurations/ModelBuilderExtensions.cs" Line="1" Column="1" NotebookId="1" />
+      <File FileName="BugAnalysis.DataService/Models/CodeFeature.cs" Line="1" Column="1" NotebookId="1" />
+      <File FileName="BugAnalysis.DataService/Interfaces/IBugAnalysisDataService.cs" Line="1" Column="1" NotebookId="1" />
+    </Files>
+    <Pads>
+      <Pad Id="ProjectPad">
+        <State name="__root__">
+          <Node name="BugAnalysis" expanded="True">
+            <Node name="BugAnalysis.DataService" expanded="True" />
+            <Node name="BugAnalysis.FunctionalService" expanded="True">
+              <Node name="Interfaces" expanded="True" />
+              <Node name="Services" expanded="True" />
+            </Node>
+          </Node>
+        </State>
+      </Pad>
+    </Pads>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>

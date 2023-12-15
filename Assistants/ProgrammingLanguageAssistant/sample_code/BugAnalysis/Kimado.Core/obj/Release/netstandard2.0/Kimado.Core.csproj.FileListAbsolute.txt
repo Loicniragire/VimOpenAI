@@ -1,0 +1,8 @@
+/Users/loicniragire/Workspace/core/src/Kimado.Core/bin/Release/netstandard2.0/Kimado.Core.deps.json
+/Users/loicniragire/Workspace/core/src/Kimado.Core/bin/Release/netstandard2.0/Kimado.Core.dll
+/Users/loicniragire/Workspace/core/src/Kimado.Core/bin/Release/netstandard2.0/Kimado.Core.pdb
+/Users/loicniragire/Workspace/core/src/Kimado.Core/obj/Release/netstandard2.0/Kimado.Core.csproj.AssemblyReference.cache
+/Users/loicniragire/Workspace/core/src/Kimado.Core/obj/Release/netstandard2.0/Kimado.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/loicniragire/Workspace/core/src/Kimado.Core/obj/Release/netstandard2.0/Kimado.Core.csproj.CoreCompileInputs.cache
+/Users/loicniragire/Workspace/core/src/Kimado.Core/obj/Release/netstandard2.0/Kimado.Core.dll
+/Users/loicniragire/Workspace/core/src/Kimado.Core/obj/Release/netstandard2.0/Kimado.Core.pdb

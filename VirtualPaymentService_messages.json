@@ -1,0 +1,22 @@
+{
+  "id": "msg_iNxCwIQKnCEk9THlBUpVlAYw",
+  "object": "thread.message",
+  "created_at": 1702550588,
+  "thread_id": "thread_peNzYFFOvMd4tyUbOH339LMs",
+  "role": "user",
+  "content": [
+    {
+      "type": "text",
+      "text": {
+        "value": "Please explain in details what this program is about",
+        "annotations": []
+      }
+    }
+  ],
+  "file_ids": [
+    "file-gwJHto0wEot5liMcvpq5hr52"
+  ],
+  "assistant_id": null,
+  "run_id": null,
+  "metadata": {}
+}

@@ -1,0 +1,32 @@
+{
+    "applicationGroupRepo": "VirtualPaymentService",
+    "applicationGroupControlFile": "virtualpaymentservice/k8s/VirtualPaymentService.master.json",
+    "applicationType": "dotnetcore",
+    "dotnetVersion": "3.1",
+    "configFileDir": "virtualpaymentservice/k8s/",
+    "mergeDotnetConfigs": "True",
+    "configFiles": {
+        "appsettings.json": {
+            "default": "appsettings.k8s.json",
+            "prd": "appsettings.k8s.prd.json",
+            "dmo": "appsettings.k8s.dmo.json",
+            "rcp": "appsettings.k8s.rcp.json",
+            "qas": "appsettings.k8s.qas.json",
+            "dev": "appsettings.k8s.dev.json",
+            "local": "appsettings.k8s.local.json"
+        },
+        "log4net.config": {
+            "default": "log4net.config"
+        }
+    },
+    "repositoryRootDir": "virtualpaymentservice",
+    "deploymentAndServiceName": "virtual-payment-service",
+    "servicePort": "80",
+    "applicationRunCommand": "dotnet VirtualPaymentService.dll",
+    "sourceSolutionFile": "virtualpaymentservice/VirtualPaymentService.sln",
+    "imageName": "virtualpaymentservice",
+    "livenessProbe": "/health",
+    "databaseAccess": "True",
+    "serviceAccountNamePrefix": "patrick.davies",
+    "SSIDSoftwareName": "patrick.davies"
+}

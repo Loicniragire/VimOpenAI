@@ -1,0 +1,383 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.Api/BugAnalysis.Api.csproj": {}
+  },
+  "projects": {
+    "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.Api/BugAnalysis.Api.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.Api/BugAnalysis.Api.csproj",
+        "projectName": "BugAnalysis.Api",
+        "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.Api/BugAnalysis.Api.csproj",
+        "packagesPath": "/Users/loicniragire/.nuget/packages/",
+        "outputPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.Api/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/loicniragire/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0": {
+            "targetAlias": "net7.0",
+            "projectReferences": {
+              "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.FunctionalService/BugAnalysis.FunctionalService.csproj": {
+                "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.FunctionalService/BugAnalysis.FunctionalService.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net7.0": {
+          "targetAlias": "net7.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[12.0.1, )"
+            },
+            "FluentValidation.AspNetCore": {
+              "target": "Package",
+              "version": "[11.3.0, )"
+            },
+            "Microsoft.AspNetCore.Authentication.Certificate": {
+              "target": "Package",
+              "version": "[7.0.10, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.400/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.DataService/BugAnalysis.DataService.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.DataService/BugAnalysis.DataService.csproj",
+        "projectName": "BugAnalysis.DataService",
+        "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.DataService/BugAnalysis.DataService.csproj",
+        "packagesPath": "/Users/loicniragire/.nuget/packages/",
+        "outputPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.DataService/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/loicniragire/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0": {
+            "targetAlias": "net7.0",
+            "projectReferences": {
+              "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj": {
+                "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net7.0": {
+          "targetAlias": "net7.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[7.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[7.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[7.0.11, )"
+            },
+            "Microsoft.EntityFrameworkCore.tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[7.0.10, )"
+            },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Microsoft.Extensions.Configuration.FileExtensions": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            },
+            "Pomelo.EntityFrameworkCore.MySql": {
+              "target": "Package",
+              "version": "[7.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.400/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.FunctionalService/BugAnalysis.FunctionalService.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.FunctionalService/BugAnalysis.FunctionalService.csproj",
+        "projectName": "BugAnalysis.FunctionalService",
+        "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.FunctionalService/BugAnalysis.FunctionalService.csproj",
+        "packagesPath": "/Users/loicniragire/.nuget/packages/",
+        "outputPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.FunctionalService/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/loicniragire/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net7.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net7.0": {
+            "targetAlias": "net7.0",
+            "projectReferences": {
+              "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.DataService/BugAnalysis.DataService.csproj": {
+                "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/BugAnalysis.DataService/BugAnalysis.DataService.csproj"
+              },
+              "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Common/Kimado.Common.csproj": {
+                "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Common/Kimado.Common.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net7.0": {
+          "targetAlias": "net7.0",
+          "dependencies": {
+            "AutoMapper": {
+              "target": "Package",
+              "version": "[12.0.1, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.400/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Common/Kimado.Common.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Common/Kimado.Common.csproj",
+        "projectName": "Kimado.Common",
+        "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Common/Kimado.Common.csproj",
+        "packagesPath": "/Users/loicniragire/.nuget/packages/",
+        "outputPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Common/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/loicniragire/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
+            "projectReferences": {
+              "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj": {
+                "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "Microsoft.CSharp": {
+              "target": "Package",
+              "version": "[4.7.0, )"
+            },
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "System.Data.DataSetExtensions": {
+              "target": "Package",
+              "version": "[4.5.0, )"
+            },
+            "log4net": {
+              "target": "Package",
+              "version": "[2.0.15, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.400/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj",
+        "projectName": "Kimado.Core",
+        "projectPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/Kimado.Core.csproj",
+        "packagesPath": "/Users/loicniragire/.nuget/packages/",
+        "outputPath": "/Users/loicniragire/Workspace/BugAnalysis/Kimado.Core/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/loicniragire/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netstandard2.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netstandard2.0": {
+            "targetAlias": "netstandard2.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netstandard2.0": {
+          "targetAlias": "netstandard2.0",
+          "dependencies": {
+            "NETStandard.Library": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[2.0.3, )",
+              "autoReferenced": true
+            },
+            "System.Data.DataSetExtensions": {
+              "target": "Package",
+              "version": "[4.5.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/7.0.400/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

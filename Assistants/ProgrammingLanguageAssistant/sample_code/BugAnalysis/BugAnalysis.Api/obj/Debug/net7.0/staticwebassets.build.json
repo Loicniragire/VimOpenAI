@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "MJ+btlOfUK2qnvYCKpqTCJFHOKFFEFHFZvzflEVx4Ks=",
+  "Source": "BugAnalysis.Api",
+  "BasePath": "_content/BugAnalysis.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

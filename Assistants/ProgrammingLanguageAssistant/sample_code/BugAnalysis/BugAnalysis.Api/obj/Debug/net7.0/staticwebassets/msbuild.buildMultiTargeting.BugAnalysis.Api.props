@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/BugAnalysis.Api.props" />
+</Project>

@@ -1,0 +1,98 @@
+version: 2.1
+
+orbs:
+  artifactory-orb: jfrog/artifactory-orb@1
+  prog-octo: progfin-ondemand/octopus@0.3.1
+  prog-dotnet: progfin-ondemand/dotnet@2
+  prog-checkmarx: progfin-ondemand/checkmarx@1.6.0
+  prog-sonar: progfin-ondemand/sonarqube@1.12.0
+  mend: progfin-ondemand/whitesource@1.11.5
+  pipeline-policy:  progfin-ondemand/unified-pipeline-policy@1.22.0
+  slack: circleci/slack@4
+
+build_version: &build_version
+  build-version-json-file: "./version.json"
+  build-version-jq-key: ".version"
+  
+parameters:
+  project-name:
+    type: string
+    default: "VirtualPaymentService"
+  slack:
+    type: string
+    default: "pay-processing-builds"
+      
+workflows:
+  VirtualPaymentService-Pipeline:
+    jobs:      
+      - prog-checkmarx/cx-scan:
+          context:
+            - aws-sharedservices
+            - CxFlow
+          exclude-folders: "*Tests"
+          exclude-option: true
+      - mend/ws-scan:
+          context: [ aws-sharedservices-limited, security-scans ]
+          isdotnet: true
+          branch: << pipeline.git.branch >>
+          ws_excludes: "*Tests"
+          root_dir: << pipeline.parameters.project-name >>
+          requires:
+            - prog-dotnet/unit-test
+                    
+      # Initialize Policy Engine
+      - pipeline-policy/populate-standard-fields:
+          build-number: << pipeline.number >>
+          prj-name: << pipeline.parameters.project-name >>
+          context:
+            - aws-sharedservices
+          
+      #Build and Test
+      - prog-dotnet/unit-test:
+          test-folder: "."
+          test-folder-pattern: '"*.Tests*"'
+          package-id: << pipeline.parameters.project-name >>
+          pipeline-number: << pipeline.number >>
+          slack-channel: << pipeline.parameters.slack >>
+          image: art.api.progleasing.com/docker-base/prog-dotnetsdk6
+          context:
+            - aws-sharedservices-limited
+          requires:
+            - pipeline-policy/populate-standard-fields
+      - prog-sonar/scan:
+          slack-channel: << pipeline.parameters.slack >>
+          image: art.api.progleasing.com/docker-base/prog-sonarscanner6
+          context:
+            - aws-sharedservices-limited
+            - on-prem
+          requires:
+            - prog-dotnet/unit-test     
+      - prog-dotnet/publish:
+          slack-channel: << pipeline.parameters.slack >>
+          image: art.api.progleasing.com/docker-base/prog-dotnetsdk6
+          context:
+            - aws-sharedservices-limited
+          requires:            
+            - pipeline-policy/populate-standard-fields
+      - prog-octo/prepare-octopus-deploy:
+          name: create-octopus-release-component
+          context: [ aws-sharedservices-limited ]
+          <<: *build_version
+          octopus-channel-steps:
+            - run:
+                name: Determine channel
+                command: |
+                        [[ "${CIRCLE_BRANCH}" == "master"* ]] && OCTOPUS_CHANNEL="Main"
+                        [[ "${CIRCLE_BRANCH}" != "master"* ]] && OCTOPUS_CHANNEL="Feature"
+                        echo "export OCTOPUS_CHANNEL='${OCTOPUS_CHANNEL}'" >> "$BASH_ENV"
+          artifact-build-number: 'ci-<<pipeline.number>>'
+          prepare-artifact: true
+          package-base-path: "./staging/"
+          artifactory-repo-path: << pipeline.parameters.project-name >>
+          use-unique-release-number: true
+          requires:
+            - prog-dotnet/publish
+            - mend/ws-scan
+            - prog-sonar/scan
+            - prog-checkmarx/cx-scan
+          

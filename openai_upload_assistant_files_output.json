@@ -1,0 +1,52 @@
+[
+    {
+  "object": "file",
+  "id": "file-bHBS2Q5238RghWfU7SkFVvxt",
+  "purpose": "assistants",
+  "filename": "AssemblyInfo.txt",
+  "bytes": 1397,
+  "created_at": 1702575180,
+  "status": "processed",
+  "status_details": null
+},
+    {
+  "object": "file",
+  "id": "file-1TLTZyEYysNtYEBFVWlY4j53",
+  "purpose": "assistants",
+  "filename": "Kimado.Common.Contracts.txt",
+  "bytes": 7363,
+  "created_at": 1702575182,
+  "status": "processed",
+  "status_details": null
+},
+    {
+  "object": "file",
+  "id": "file-dDpO4Gl7ntF8fvvrlDIKa3of",
+  "purpose": "assistants",
+  "filename": "Kimado.Common.Models.txt",
+  "bytes": 3356,
+  "created_at": 1702575184,
+  "status": "processed",
+  "status_details": null
+},
+    {
+  "object": "file",
+  "id": "file-IUzMJsGkjvWD92noNx0t7wLw",
+  "purpose": "assistants",
+  "filename": "Kimado.Common.Services.txt",
+  "bytes": 21639,
+  "created_at": 1702575186,
+  "status": "processed",
+  "status_details": null
+},
+    {
+  "object": "file",
+  "id": "file-0dTj8aFwMP22NnHmo31O8o4p",
+  "purpose": "assistants",
+  "filename": "Kimado.Common.txt",
+  "bytes": 2118,
+  "created_at": 1702575188,
+  "status": "processed",
+  "status_details": null
+}
+]

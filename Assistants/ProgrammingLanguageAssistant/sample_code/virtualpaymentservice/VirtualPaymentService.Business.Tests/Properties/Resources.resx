@@ -1,0 +1,563 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="MarqetaCardTokenTestData_ResponseWithFiveTokens_ExpectedMappedResult" xml:space="preserve">
+    <value>{"digitalWalletTokens":[{"walletToken":"ccca75ede7d-7723-4fa7-949b-df32baa21","walletTokenStatus":1,"deviceType":"MOBILE_PHONE","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"ccc65eec8b4-3d7e-462b-9c3a-a36ce05d0","walletTokenStatus":1,"deviceType":"WATCH","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"ccca77d91fe-8743-45ec-939b-95754c3be789","walletTokenStatus":2,"deviceType":"WATCH","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"ccca77d91fe-8743-45ec-939b-95754c3be789","walletTokenStatus":3,"deviceType":"WATCH","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"cccf3b7ad39-bc2f-4445-9a98-de7aee76f51f","walletTokenStatus":3,"deviceType":"WATCH","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"cccf7aa62d4-1496-4377-bd9d-3e99978f36f6","walletTokenStatus":1,"deviceType":"WATCH","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"ccc008800f8-32f2-4ac4-8a21-0f31997f0","walletTokenStatus":2,"deviceType":"MOBILE_PHONE","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"ccc008800f8-32f2-4ac4-8a21-0f31997f0","walletTokenStatus":3,"deviceType":"TABLET","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"},{"walletToken":"ccc66deab70-ccd8-4e28-bb16-d1abe03ad","walletTokenStatus":3,"deviceType":"MOBILE_PHONE","cardToken":"123456-25a4d6a4-452b-4177-8192-d2312"}]}</value>
+    <comment>The expected mapped response this service would generate based on the example Marqeta response.</comment>
+  </data>
+  <data name="MarqetaCardTokenTestData_ResponseWithFiveTokens_SourceData" xml:space="preserve">
+    <value>{
+    "count": 9,
+    "start_index": 0,
+    "end_index": 0,
+    "is_more": false,
+    "data": [
+        {
+            "token": "ccca75ede7d-7723-4fa7-949b-df32baa21",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "ACTIVE",
+            "state_reason": "Approved via automated validation",
+            "fulfillment_status": "PROVISIONED",
+            "issuer_eligibility_decision": "0000",
+            "created_time": "2021-10-01T18:55:45Z",
+            "last_modified_time": "2021-11-01T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "5E3EC96325C74925830F794CF68927DE",
+                "pan_reference_id": "V-AC009F37729B48008EB187716B0F6556",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "1234567890123456",
+                "token_expiration": "1124",
+                "token_score": "01",
+                "token_eligibility_decision": "DECISION_GREEN"
+            },
+            "device": {
+                "token": "173ae289-3e75-4867-a925-94b1307a010e",
+                "type": "MOBILE_PHONE",
+                "language_code": "eng",
+                "device_id": "57E9A53C60C441F3AED6538C4C3DF78C",
+                "phone_number": "8015551212",
+                "name": "Joes iPhone 13",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "4792A38C795B497FA9FC39AEBA617A40",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "ccc65eec8b4-3d7e-462b-9c3a-a36ce05d0",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "REQUESTED",
+            "state_reason": "Requested by application",
+            "fulfillment_status": "DECISION_GREEN",
+            "issuer_eligibility_decision": "0000",
+            "created_time": "2021-10-02T18:55:45Z",
+            "last_modified_time": "2021-11-02T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "C7273DA7067F487595DECCFED6E114FF",
+                "pan_reference_id": "V-5D5AFE5B65D44D4DAD3663974F2AD634",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "2345678901234567",
+                "token_expiration": "1125",
+                "token_score": "02",
+                "token_eligibility_decision": "DECISION_GREEN"
+            },
+            "device": {
+                "token": "650593bc-9324-452a-a524-7f321347d1cb",
+                "type": "WATCH",
+                "language_code": "eng",
+                "device_id": "900C22B0F644488AA58B6AD39A01D6D4",
+                "phone_number": "8015551212",
+                "name": "Joes Apple Watch",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "27111D657994479280B582213407D0CD",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "ccca77d91fe-8743-45ec-939b-95754c3be789",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "REQUESTED",
+            "state_reason": "Requested by application",
+            "fulfillment_status": "DECISION_YELLOW",
+            "issuer_eligibility_decision": "0000",
+            "created_time": "2021-10-02T18:55:45Z",
+            "last_modified_time": "2021-11-02T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "C7273DA7067F487595DECCFED6E114FF",
+                "pan_reference_id": "V-5D5AFE5B65D44D4DAD3663974F2AD634",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "2345678901234567",
+                "token_expiration": "1125",
+                "token_score": "02",
+                "token_eligibility_decision": "DECISION_YELLOW"
+            },
+            "device": {
+                "token": "650593bc-9324-452a-a524-7f321347d1cb",
+                "type": "WATCH",
+                "language_code": "eng",
+                "device_id": "900C22B0F644488AA58B6AD39A01D6D4",
+                "phone_number": "8015551212",
+                "name": "Joes Apple Watch",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "27111D657994479280B582213407D0CD",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "ccca77d91fe-8743-45ec-939b-95754c3be789",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "REQUESTED",
+            "state_reason": "Requested by application",
+            "fulfillment_status": "DECISION_RED",
+            "issuer_eligibility_decision": "0000",
+            "created_time": "2021-10-02T18:55:45Z",
+            "last_modified_time": "2021-11-02T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "C7273DA7067F487595DECCFED6E114FF",
+                "pan_reference_id": "V-5D5AFE5B65D44D4DAD3663974F2AD634",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "2345678901234567",
+                "token_expiration": "1125",
+                "token_score": "02",
+                "token_eligibility_decision": "DECISION_RED"
+            },
+            "device": {
+                "token": "650593bc-9324-452a-a524-7f321347d1cb",
+                "type": "WATCH",
+                "language_code": "eng",
+                "device_id": "900C22B0F644488AA58B6AD39A01D6D4",
+                "phone_number": "8015551212",
+                "name": "Joes Apple Watch",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "27111D657994479280B582213407D0CD",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "cccf3b7ad39-bc2f-4445-9a98-de7aee76f51f",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "REQUESTED",
+            "state_reason": "Requested by application",
+            "fulfillment_status": "REJECTED",
+            "issuer_eligibility_decision": "0000",
+            "created_time": "2021-10-02T18:55:45Z",
+            "last_modified_time": "2021-11-02T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "C7273DA7067F487595DECCFED6E114FF",
+                "pan_reference_id": "V-5D5AFE5B65D44D4DAD3663974F2AD634",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "2345678901234567",
+                "token_expiration": "1125",
+                "token_score": "02",
+                "token_eligibility_decision": "REJECTED"
+            },
+            "device": {
+                "token": "650593bc-9324-452a-a524-7f321347d1cb",
+                "type": "WATCH",
+                "language_code": "eng",
+                "device_id": "900C22B0F644488AA58B6AD39A01D6D4",
+                "phone_number": "8015551212",
+                "name": "Joes Apple Watch",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "27111D657994479280B582213407D0CD",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "cccf7aa62d4-1496-4377-bd9d-3e99978f36f6",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "REQUESTED",
+            "state_reason": "Requested by application",
+            "fulfillment_status": "PROVISIONED",
+            "issuer_eligibility_decision": "0000",
+            "created_time": "2021-10-02T18:55:45Z",
+            "last_modified_time": "2021-11-02T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "C7273DA7067F487595DECCFED6E114FF",
+                "pan_reference_id": "V-5D5AFE5B65D44D4DAD3663974F2AD634",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "2345678901234567",
+                "token_expiration": "1125",
+                "token_score": "02",
+                "token_eligibility_decision": "PROVISIONED"
+            },
+            "device": {
+                "token": "650593bc-9324-452a-a524-7f321347d1cb",
+                "type": "WATCH",
+                "language_code": "eng",
+                "device_id": "900C22B0F644488AA58B6AD39A01D6D4",
+                "phone_number": "8015551212",
+                "name": "Joes Apple Watch",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "27111D657994479280B582213407D0CD",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "ccc008800f8-32f2-4ac4-8a21-0f31997f0",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "SUSPENDED",
+            "state_reason": "Does not pass auto verification",
+            "fulfillment_status": "DECISION_YELLOW",
+            "issuer_eligibility_decision": "token.activation.verification.required",
+            "created_time": "2021-10-03T18:55:45Z",
+            "last_modified_time": "2021-11-03T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "F7F372F77FCB40F89FDB192DB8C5884D",
+                "pan_reference_id": "V-8A74BABA4CE642A28EDDD3D319E89E3E",
+                "token_requestor_id": "40010075001",
+                "token_requestor_name": "ANDROID_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "3456789012345678",
+                "token_expiration": "1126",
+                "token_score": "03",
+                "token_eligibility_decision": "DECISION_YELLOW"
+            },
+            "device": {
+                "token": "7de7d785-ff51-49b8-a992-dab1daf75128",
+                "type": "MOBILE_PHONE",
+                "language_code": "eng",
+                "device_id": "045632E32F25800141612033439308035B57A7954FD29575",
+                "phone_number": "8015551313",
+                "name": "Joes Wifes Samsung Phone",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "54A50F5EC6794568BD5B54CC761464E4",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_YELLOW"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED",
+                "reason_code": "A1"
+            },
+            "address_verification": {
+                "name": "Jane Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "ccc008800f8-32f2-4ac4-8a21-0f31997f0",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "REQUEST_DECLINED",
+            "state_reason": "Does not pass auto verification",
+            "fulfillment_status": "DECISION_RED",
+            "issuer_eligibility_decision": "cvv.attempt.limit.exceeded",
+            "created_time": "2021-10-04T18:55:45Z",
+            "last_modified_time": "2021-11-04T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "AFF0EAFF35AD4481B81D6527654107E1",
+                "pan_reference_id": "V-13133212254843A8BB354254EEBFDC34",
+                "token_requestor_id": "40010075001",
+                "token_requestor_name": "ANDROID_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "4567890123456789",
+                "token_expiration": "1127",
+                "token_score": "04",
+                "token_eligibility_decision": "DECISION_RED"
+            },
+            "device": {
+                "token": "39e57089-209d-4db1-a9c5-dc8b6f6e1f49",
+                "type": "TABLET",
+                "language_code": "eng",
+                "device_id": "8DDD2DE4FC77441C9829C7D4609621A9",
+                "phone_number": "",
+                "name": "Family Tablet",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "A7AD27E4C0CB47EF806701210CB1FB9C",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_YELLOW"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED",
+                "reason_code": "05"
+            },
+            "address_verification": {
+                "name": "Jane Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        },
+        {
+            "token": "ccc66deab70-ccd8-4e28-bb16-d1abe03ad",
+            "card_token": "123456-25a4d6a4-452b-4177-8192-d2312",
+            "state": "TERMINATED",
+            "state_reason": "Card canceled",
+            "fulfillment_status": "DECISION_RED",
+            "issuer_eligibility_decision": "cardholder.not.active",
+            "created_time": "2021-10-05T18:55:45Z",
+            "last_modified_time": "2021-11-05T22:36:10Z",
+            "token_service_provider": {
+                "token_reference_id": "5E3EC96325C74925830F794CF68927DE",
+                "pan_reference_id": "V-AC009F37729B48008EB187716B0F6556",
+                "token_requestor_id": "40010030273",
+                "token_requestor_name": "APPLE_PAY",
+                "token_type": "DEVICE_SECURE_ELEMENT",
+                "token_pan": "9991234567890123",
+                "token_expiration": "1121",
+                "token_score": "01",
+                "token_eligibility_decision": "DECISION_GREEN"
+            },
+            "device": {
+                "token": "173ae289-3e75-4867-a925-94b1307a010e",
+                "type": "MOBILE_PHONE",
+                "language_code": "eng",
+                "device_id": "57E9A53C60C441F3AED6538C4C3DF78C",
+                "phone_number": "8015551212",
+                "name": "Joes iPhone 13",
+                "location": "+37.81/-122.26",
+                "ip_address": "013.002.136.004"
+            },
+            "wallet_provider_profile": {
+                "account": {
+                    "id": "A7AD27E4C0CB47EF806701210CB1FB9C",
+                    "score": "05"
+                },
+                "risk_assessment": {
+                    "score": "DECISION_GREEN"
+                },
+                "device_score": "03",
+                "pan_source": "KEY_ENTERED",
+                "reason_code": "05"
+            },
+            "address_verification": {
+                "name": "Joe Burns",
+                "street_address": "223 Elm Street",
+                "postal_code": "94703"
+            }
+        }
+    ]
+}</value>
+    <comment>Mock return of Marqeta response from calling endpoint v3/digitalwallettokens/card
+
+There are 5 wallet tokens in this example for the same card. Each has the 5 possible status values to test the mapping code from Marqeta enum to our simplified status enum.</comment>
+  </data>
+</root>
