@@ -1,4 +1,15 @@
 " OPENAI
+" Directory structure
+" - OPENAI_WORKING_DIR
+"   - OPENAI_PROJECT_HOME_DIR
+"       - requests
+"       - responses
+"       - output
+"       - source
+"
+" Within a working directory, there can be multiple projects.
+" To set the working directory to default, use the command :OpenAISetWorkingProject <project_path>
+"
 " 
 set encoding=utf-8
 set fileencoding=utf-8
@@ -104,7 +115,7 @@ function! SendToOpenAI(requestPayload, outputfile, endpoint)
 	" Execute the curl command
 	" execute '!' . l:curl_cmd
 	" execute 'edit ' . a:outputfile
-	echo 'curl_cmd: ' . l:curl_cmd
+	"echo 'curl_cmd: ' . l:curl_cmd
 endfunction
 
 function! GetOpenAIUploadedFiles(outputfile)
@@ -142,7 +153,7 @@ function! CreateOpenAIAssistantThread()
 	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/threads_output_tmp.json'
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_CMD . ' -o ' . l:outputfile
 
-    echo 'cmd: ' . l:cmd
+    "echo 'cmd: ' . l:cmd
 	execute 'silent !' . l:cmd
 	" Read the content of the output file as a string
 	let output = join(readfile(l:outputfile), "\n")
@@ -205,7 +216,7 @@ function! CreateThreadMessage(messageRequest, outputfile)
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
 	let l:curl_cmd = l:response. l:jsonEncodedPayload . ' -o ' . a:outputfile
-    echo 'curl_cmd - CreateThreadMessage: ' . l:curl_cmd
+    "echo 'curl_cmd - CreateThreadMessage: ' . l:curl_cmd
 	execute 'silent !' . l:curl_cmd
 endfunction
 
@@ -372,10 +383,10 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 	let l:directoryPath = fnamemodify(a:directoryPath, ':p')
 	echo 'Creating assistant for project: ' . a:projectName . ' with files in directory: ' . l:directoryPath
 	"Generate an assistant for the project
-	"let l:assistantId = CreateProjectAssistant(a:projectName, 'A generic .NetCore project assistant', g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS)
-	let l:assistantId = CreateProjectAssistant(a:projectName, "A generic .NetCore project assistant", "Test...")
+	let l:assistantId = CreateProjectAssistant(a:projectName, 'A generic .NetCore project assistant', g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS)
+	"let l:assistantId = CreateProjectAssistant(a:projectName, "A generic .NetCore project assistant", "Test...")
 
-    echo 'Assistant created with id: ' . l:assistantId
+    "echo 'Assistant created with id: ' . l:assistantId
     "
 	" Upload all files in the directory to OpenAI
 	let l:uploadedFiles = OpenAIUploadAssistantFiles(l:directoryPath)
@@ -679,9 +690,9 @@ function! CreateProjectAssistant(projectName, description, instructions)
     "let l:curl_cmd = l:cmd . ' -d ' . l:escapedPayload . ' -o ' . l:outputfile
     "enclose the payload in double quotes
     let l:curl_cmd = l:cmd . ' -d ' . l:jsonEncodedPayload .  ' -o ' . l:outputfile
-    echo 'curl command: ' . l:curl_cmd
+    "echo 'curl command: ' . l:curl_cmd
 
-    execute '!' . l:curl_cmd
+    execute 'silent !' . l:curl_cmd
 
     " read the output file and extract the assistant id
     let l:assistantId = ''
@@ -958,12 +969,12 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 	" Create a thread for each namespace
 	for namespace in l:classNamespaces
 		" Get a thread id for the given namespace
-		echo 'Creating thread for namespace: ' . namespace
+		"echo 'Creating thread for namespace: ' . namespace
 		let l:threadId = GetThreadIdByNamespace(namespace, '')
 		let l:threadMessageRequest = ThreadMessageJsonPayload(l:threadId, l:message, l:uploadedFileIds)
 		let l:messageFilename = fnamemodify(namespace, ':t:r') . '.' . l:threadMessagePayloadFilename
 		let l:threadMessageOutputFile = s:ReplaceDotsInFilename(l:messageFilename, '_')
-		echo 'threadMessageOutputFile: ' . l:threadMessageOutputFile
+		"echo 'threadMessageOutputFile: ' . l:threadMessageOutputFile
 		call CreateThreadMessage(l:threadMessageRequest, l:threadMessageOutputFile)
 	endfor
 endfunction
@@ -1036,16 +1047,6 @@ function! GetThreadIdByNamespace(namespace, namespaceJoinThreadJsonFile)
 		return l:threadId
     endif
 endfunction
-
-
-function! Foo(messageJson)
-	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
-	let l:threadId = json_decode(join(readfile(a:messageJson), "\n"))['thread_id']
-	echo 'Thread id: ' . l:threadId
-	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
-    echo 'response: ' . l:response
-endfunction
-
 
 function! ExecuteThreadMessage(messageJson)
 	let l:outputfile = g:OPENAI_RESPONSES_DIR . '/openai_thread_message_output.json'
@@ -1168,6 +1169,42 @@ function! SetupProjectAssistant(projectPath)
 	return g:OPENAI_PROJECT_HOME_DIR
 endfunction
 
+" command to setup a project assistant.
+" Parameters:
+" projectPath: The path to the project to setup.
+" returns:
+" The project home directory.
+command! -nargs=1 OpenAISetupProject call SetupProjectAssistant(<f-args>)
+
+" Function to determine if directory paths are related.
+" Parameters:
+" path1: The first path to compare.
+" path2: The second path to compare.
+" Returns:
+" 0 if the paths are not related.
+" 1 if path1 is a subdirectory of path2.
+" 2 if path2 is a subdirectory of path1.
+function! ComparePaths(path1, path2)
+    " Replace backslashes with forward slashes and remove trailing slashes
+    let normalizedPath1 = substitute(a:path1, '\\', '/', 'g')
+    let normalizedPath2 = substitute(a:path2, '\\', '/', 'g')
+
+    let normalizedPath1 = substitute(normalizedPath1, '/\+$', '', '')
+    let normalizedPath2 = substitute(normalizedPath2, '/\+$', '', '')
+
+    " use stridx to check if normalizedPath1 is a substring of normalizedPath2
+    if stridx(normalizedPath2, normalizedPath1) == 0
+        " path2 is a subdirectory of path1
+        return 2
+    elseif stridx(normalizedPath1, normalizedPath2) == 0
+        " path1 is a subdirectory of path2
+        return 1
+    else
+        " path1 and path2 are not related
+        return 0
+    endif
+
+endfunction
 
 " Function to allow the user to select a project directory and set it as the working project.
 " Parameters:
@@ -1182,6 +1219,22 @@ function! SetWorkingProject(projectPath)
     endif
 
     let l:projectHomeDirectory = fnamemodify(a:projectPath, ':p')
+	let l:defaultHome = fnamemodify(g:OPENAI_WORKING_DIR, ':p')
+    let l:comparePaths = ComparePaths(l:projectHomeDirectory, l:defaultHome)
+
+    " Make sure that l:projectHomeDirectory is inside g:OPENAI_WORKING_DIR
+    " If not, return an error message
+    if l:comparePaths != 1
+        echoerr 'A working project directory must be inside the current working directory: ' . g:OPENAI_WORKING_DIR
+        return ''
+    else
+        " if directory doesn't exist, create it
+        if !isdirectory(l:projectHomeDirectory)
+            echoerr "Project not setup. Please run :OpenAISetupProject to setup the project"
+            return ''
+        endif
+    endif
+    "
 	let l:requestsDir = l:projectHomeDirectory . '/requests'
 	let l:responsesDir = l:projectHomeDirectory . '/responses'
 	let l:outputDir = l:projectHomeDirectory . '/output'
@@ -1194,15 +1247,26 @@ function! SetWorkingProject(projectPath)
 	let g:OPENAI_OUTPUT_DIR = l:outputDir
 	let g:OPENAI_SOURCE_DIR = l:sourceDir
 
-    echo 'Project home directory: ' . g:OPENAI_PROJECT_HOME_DIR
+    echo 'Working Project set to: ' . g:OPENAI_PROJECT_HOME_DIR
 endfunction
  command! -nargs=1 OpenAISetWorkingProject call SetWorkingProject(<f-args>)
 
 function! GetWorkingProject()
-    echo g:OPENAI_PROJECT_HOME_DIR
+    " if g:OPENAI_PROJECT_HOME_DIR is empty, return an error message
+    if empty(g:OPENAI_PROJECT_HOME_DIR)
+        echo 'No working project set. Please run :OpenAISetWorkingProject'
+        return ''
+    endif
+
+    if !isdirectory(g:OPENAI_PROJECT_HOME_DIR)
+        echo 'Working project directory does not exist. Please run :OpenAISetupProject'
+        return ''
+    endif
+
+    echo 'Working Project: ' . g:OPENAI_PROJECT_HOME_DIR
 endfunction
 
-command! -nargs=0 OpenAIWorkingProject call GetWorkingProject()
+command! -nargs=0 OpenAIGetWorkingProject call GetWorkingProject()
 
 function! ProjectSetupComplete(projectPath)
     " check that the project path is a directory with the following subdirectories:
@@ -1224,4 +1288,29 @@ function! ProjectSetupComplete(projectPath)
 
     return 1
 endfunction
+
+command! -nargs=0 OpenAIGetHomeDirectory echo fnamemodify(g:OPENAI_WORKING_DIR, ':p')
+
+function! SetHomeDirectory(homeDirectory)
+    let l:projectHomeDir = fnamemodify(a:homeDirectory, ':p')
+    " check that the home directory exists
+    if !isdirectory(l:projectHomeDir)
+        " create the directory
+        echo 'Creating directory: ' . l:projectHomeDir
+        call mkdir(l:projectHomeDir, 'p')
+    endif
+
+    let g:OPENAI_WORKING_DIR = l:projectHomeDir
+    echo 'Home directory set to: ' . g:OPENAI_WORKING_DIR
+
+    " clear project's directories
+     let g:OPENAI_PROJECT_HOME_DIR = ''
+     let g:OPENAI_REQUESTS_DIR = ''
+     let g:OPENAI_RESPONSES_DIR = ''
+     let g:OPENAI_OUTPUT_DIR = ''
+     let g:OPENAI_SOURCE_DIR = ''
+    "
+endfunction
+
+command! -nargs=1 OpenAISetHomeDirectory call SetHomeDirectory(<f-args>)
 
