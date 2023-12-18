@@ -74,7 +74,9 @@ function! SetToDefaultWorkingDir()
 endfunction
 
 " command to reset the working directory to default
-command! -nargs=0 OpenAIReset call SetToDefaultWorkingDir()
+" It creates a default directory structure under the OPENAI_WORKING_DIR
+" and sets the global variables to point to the newly created directories.
+command! -nargs=0 OpenAISetToDefault call SetToDefaultWorkingDir()
 
 " Function to attach the given fileId to the specified assistantId
 " Parameters:
@@ -150,7 +152,7 @@ endfunction
 " Create a thread pool of assistants
 " Parameters:
 " count: Number of threads to create
-command! -nargs=1 OpenAICreateAssistantThreadPool call CreateOpenAIAssistantThreads(<f-args>)
+"command! -nargs=1 OpenAICreateAssistantThreadPool call CreateOpenAIAssistantThreads(<f-args>)
 
 function! DeleteOpenAIAssistantThread(threadId)
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_CMD
@@ -232,17 +234,17 @@ function! RetrieveOpenAIAssistantThreadRun(threadId, runId, outputfile)
 endfunction
 
 " Define a Vim command that calls the function
-command! -nargs=+ OpenAICompletions call SendToOpenAI(<f-args>, 'Completions')
-command! -nargs=+ OpenAIAssistants call SendToOpenAI(<f-args>, 'Assistants')
-command! -nargs=+ OpenAIAAssistantFiles call SendToOpenAI(<f-args>, 'AssistantFiles')
+"command! -nargs=+ OpenAICompletions call SendToOpenAI(<f-args>, 'Completions')
+"command! -nargs=+ OpenAIAssistants call SendToOpenAI(<f-args>, 'Assistants')
+"command! -nargs=+ OpenAIAAssistantFiles call SendToOpenAI(<f-args>, 'AssistantFiles')
 
-command! -nargs=+ OpenAIAssignFileToAssistant call AssignOpenAIFileToAssistant(<f-args>, g:OPENAI_OUTPUT_DIR . '/openai_assign_file_to_assistant_output.json')
+"command! -nargs=+ OpenAIAssignFileToAssistant call AssignOpenAIFileToAssistant(<f-args>, g:OPENAI_OUTPUT_DIR . '/openai_assign_file_to_assistant_output.json')
 command! -nargs=0 OpenAIListUploadedFiles call GetOpenAIUploadedFiles(g:OPENAI_OUTPUT_DIR . '/openai_list_files_output.json')
 command! -nargs=0 OpenAIListAssistants call GetOpenAIAssistants(g:OPENAI_OUTPUT_DIR . '/openai_list_assistants_output.json')
 command! -nargs=1 OpenAIDeleteAssistant call DeleteOpenAIAssistant(<f-args>)
 
 "
-command! -nargs=1 OpenAIDeleteAssistantThread call DeleteOpenAIAssistantThread(<f-args>)
+"command! -nargs=1 OpenAIDeleteAssistantThread call DeleteOpenAIAssistantThread(<f-args>)
 
 " arg1: json file containing threadId and message
 " Sample call:
@@ -253,10 +255,10 @@ command! -nargs=1 OpenAIDeleteAssistantThread call DeleteOpenAIAssistantThread(<
 "	"message": "Hello, I am a message",
 "	"fileIds": ['file_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5', 'file_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5']
 " }
-command! -nargs=1 OpenAIAssistantThreadMessage call CreateThreadMessage(<f-args>, 'openai_assistant_thread_message_output.json')
+"command! -nargs=1 OpenAIAssistantThreadMessage call CreateThreadMessage(<f-args>, 'openai_assistant_thread_message_output.json')
 
 " arg1: threadId
-command! -nargs=1 OpenAIAssistantListThreadMessages call OpenAIAssistantThreadListMessages(<f-args>, 'openai_assistant_thread_list_messages_output.json');
+command! -nargs=1 OpenAIAssistantListThreadMessages call OpenAIAssistantThreadListMessages(<f-args>, g:OPENAI_OUTPUT_DIR . '/openai_assistant_thread_list_messages_output.json');
 
 " arg1: threadId
 " arg2: requestPayload
@@ -269,11 +271,11 @@ command! -nargs=1 OpenAIAssistantListThreadMessages call OpenAIAssistantThreadLi
 "      }
 " To retrieve the response from thread run, run OpenAIAssistantListThreadMessages command
 " Note: Thread Run's status: "Completed" is expected prior to receiving the response. Use OpenAIAssistantRetrieveThreadRun command to retrieve the response.
-command! -nargs=+ OpenAIAssistantThreadRun call CreateOpenAIAssistantThreadRun(<f-args>, 'openai_assistant_thread_run_output.json');
+"command! -nargs=+ OpenAIAssistantThreadRun call CreateOpenAIAssistantThreadRun(<f-args>, 'openai_assistant_thread_run_output.json');
 
 " arg1: threadId
 " arg2: runId
-command! -nargs=+ OpenAIAssistantRetrieveThreadRun call RetrieveOpenAIAssistantThreadRun(<f-args>, 'openai_assistant_retrieve_thread_run_output.json');
+"command! -nargs=+ OpenAIAssistantRetrieveThreadRun call RetrieveOpenAIAssistantThreadRun(<f-args>, 'openai_assistant_retrieve_thread_run_output.json');
 
 " Define a function to list files with specified extensions in a directory
 " Parameters:
@@ -352,11 +354,11 @@ function! ListFilesWithExtensions(directoryPath, extMap, outputDir)
 endfunction
 
 " Define a Vim command that calls the function with a map of extensions
-command! -nargs=1 ExtractCsFiles call ListFilesWithExtensions(<f-args>, {'cs': 'txt'}, fnamemodify(<f-args>, ':t') .  '_project')
+"command! -nargs=1 ExtractCsFiles call ListFilesWithExtensions(<f-args>, {'cs': 'txt'}, fnamemodify(<f-args>, ':t') .  '_project')
 
 
 " arg1: directoryPath containing artifacts from ExtractCsFiles command
-command! -nargs=1 OpenAICreateCsProjectAssistant call CreateOpenAICsProjectAssistant(<f-args>,fnamemodify(<f-args>, ':t') . '_assistant')
+"command! -nargs=1 OpenAICreateCsProjectAssistant call CreateOpenAICsProjectAssistant(<f-args>,fnamemodify(<f-args>, ':t') . '_assistant')
 
 
 " Function to create an OpenAI assistant for a project
@@ -495,7 +497,7 @@ endfunction
 " Returns:
 " None
 function! DeleteAllAssistantFiles()
-	let l:outputfile = 'openai_list_files_output.json'
+	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_list_files_output.json'
 	let l:cmd = g:OPENAI_LIST_FILES_CMD . ' -o ' . l:outputfile
 	execute '!' . l:cmd
 
@@ -530,6 +532,8 @@ function! DeleteAllAssistantFiles()
 	call s:DeleteFilesById(l:files)
 endfunction
 
+" Command to delete all uploaded files regargedless of project.
+" Note that it does not delete the assistant itself.
 command! -nargs=0 OpenAIDeleteAllAssistantFiles call DeleteAllAssistantFiles()
 
 " Function to delete all files uploaded to OpenAI for a project. See OpenAIUploadAssistantFiles for uploading files.
@@ -538,8 +542,14 @@ command! -nargs=0 OpenAIDeleteAllAssistantFiles call DeleteAllAssistantFiles()
 " Returns:
 " None
 function! DeleteCsProjectUploadedAssistantFiles(filepath)
+    let l:inputfile = a:filepath
+    " if filepath is empty, set it to the default
+    if empty(a:filepath)
+        let l:inputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+    endif
+
     " Read the file into a list of lines
-    let lines = readfile(a:filepath)
+    let lines = readfile(l:inputfile)
 
     " Join the lines into a single string and decode JSON
     let jsonObjects = json_decode(join(lines, ''))
@@ -563,7 +573,9 @@ function! DeleteCsProjectUploadedAssistantFiles(filepath)
     endfor
 endfunction
 
-command! -nargs=1 OpenAIDeleteCsProjectUploadedAssistantFiles call DeleteCsProjectUploadedAssistantFiles(<f-args>)
+" Command to delete all uploaded files by a project.
+" Note that it does not delete the assistant itself.
+command! -nargs=0 OpenAIDeleteCsProjectUploadedAssistantFiles call DeleteCsProjectUploadedAssistantFiles('')
 
 " Function to upload all files in a directory to OpenAI
 " Parameters:
@@ -750,7 +762,7 @@ endfunction
 " Returns:
 " None
 " Writes the dictionary to a JSON file named openai_group_files_by_namespace_output.json
-command! -nargs=1 GroupFilesByNamespace call GroupFilesByNamespace(<f-args>)
+"command! -nargs=1 GroupFilesByNamespace call GroupFilesByNamespace(<f-args>)
 function! GroupFilesByNamespace(dir)
     let fileDict = {}
     let namespaceDict = {}
@@ -956,6 +968,19 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 	endfor
 endfunction
 
+" command to create a thread message for a given class and assign corresponding file ids from uploaded namespace files.
+" It creates a new thread or uses an existing thread if one exists for the given class.
+" Parameters:
+" json file containing request payload. Classname is case-sensitive and without extension. Structure:
+" {
+"	"classname": "thrd_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5",
+"	"message": "Hello, I am a message",
+" }
+" Returns:
+" A message object inside the 'requests' folder.
+" This object should contain the thread_id, file_ids, and the message id - amonth other things.
+" Sample call: :OpenAICreateMessage VirtualPaymentService.Controllers
+command! -nargs=1 OpenAICreateThreadMessage call CreateAssistantThreadMessageByClassname(<f-args>)
 
 " Creates a JSON string where each key is a filename and the value is an empty string
 " returns a json string
@@ -1028,11 +1053,9 @@ function! ExecuteThreadMessage(messageJson)
 	let l:projectAssistantOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_create_project_assistant_output.json'
 	let l:projectAssistantOutput = join(readfile(l:projectAssistantOutputFile), "\n")
 	let l:projectAssistantId = json_decode(l:projectAssistantOutput)['id']
-	echo 'Project assistant id: ' . l:projectAssistantId
 
 	" load messageJson file to retrieve the thread id
 	let l:threadId = json_decode(join(readfile(a:messageJson), "\n"))['thread_id']
-	echo 'Thread id: ' . l:threadId
 
 	" create a json payload with the thread id
 	let l:threadRunPayload = {"assistant_id": l:projectAssistantId}
@@ -1040,18 +1063,23 @@ function! ExecuteThreadMessage(messageJson)
 	" stringfy the json payload
     let l:encodedThreadRunJson = json_encode(l:threadRunJson)
 
-
-
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
 	let l:curl_cmd = l:response. l:encodedThreadRunJson . ' -o ' . l:outputfile
-	echo 'Executing thread run command: ' . l:curl_cmd
 	execute '!' . l:curl_cmd
 
 	" Get execution status
 	let l:threadRunStatus = GetThreadRunStatus(l:outputfile)
 	echo 'Thread run status: ' . l:threadRunStatus
 endfunction
+
+" command to execute a thread message.
+" Parameters:
+" json file containing the generated thread message from "OpenAICreateMessage" command.
+" returns:
+" A json response inside the 'responses' directory. The file contains a collection of thread messages on the thread.
+" Sample call: :OpenAIExecuteThreadMessage requests/namespace_file_thread_message.json
+command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>)
 
 function! GetThreadRunStatus(threadExecusionJson)
 	let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
@@ -1097,7 +1125,9 @@ function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory)
 	let l:outputDir = l:projectHomeDirectory . '/output'
 	let l:sourceDir = l:projectHomeDirectory . '/source'
 
-	call mkdir(l:requestsDir, 'p')
+    if !isdirectory(l:requestsDir)
+        call mkdir(l:requestsDir, 'p')
+    endif
 	call mkdir(l:responsesDir, 'p')
 	call mkdir(l:outputDir, 'p')
 	call mkdir(l:sourceDir, 'p')
@@ -1119,18 +1149,18 @@ function! SetupProjectAssistant(projectPath)
 	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
 	let l:assistantResponse = CreateOpenAICsProjectAssistant(g:OPENAI_SOURCE_DIR, l:assistantName)
 
-		function! s:CreateSampleJsonMessageRequest(dir)
-			let l:sampleclassname = 'JITDecisionController'
-			let l:samplemessage = 'Hello, I am a message'
+    function! s:CreateSampleJsonMessageRequest(dir)
+        let l:sampleclassname = 'JITDecisionController'
+        let l:samplemessage = 'Hello, I am a message'
 
-			let l:sampleJsonMessageRequest = '{' . "\n" .
-			   \ '"classname": "' . l:sampleclassname . '",' . "\n" .
-			   \ '"message": "' . l:samplemessage . '"' . "\n" .
-			   \ '}'
-			" write the json string to g:OPENAI_REQUESTS_DIR
-			let l:sampleJsonMessagRequestFile = g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json'
-			call writefile(split(l:sampleJsonMessageRequest, '\n'), l:sampleJsonMessagRequestFile, 'b')
-		endfunction
+        let l:sampleJsonMessageRequest = '{' . "\n" .
+           \ '"classname": "' . l:sampleclassname . '",' . "\n" .
+           \ '"message": "' . l:samplemessage . '"' . "\n" .
+           \ '}'
+        " write the json string to g:OPENAI_REQUESTS_DIR
+        let l:sampleJsonMessagRequestFile = g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json'
+        call writefile(split(l:sampleJsonMessageRequest, '\n'), l:sampleJsonMessagRequestFile, 'b')
+    endfunction
 
 	" create a sample json message request
 	call s:CreateSampleJsonMessageRequest(g:OPENAI_REQUESTS_DIR)
@@ -1138,4 +1168,60 @@ function! SetupProjectAssistant(projectPath)
 	return g:OPENAI_PROJECT_HOME_DIR
 endfunction
 
+
+" Function to allow the user to select a project directory and set it as the working project.
+" Parameters:
+" projectPath: The path to the project to set as the working project.
+" Returns:
+" The project home directory.
+function! SetWorkingProject(projectPath)
+    " Check that the project setup is complete
+    if !ProjectSetupComplete(a:projectPath)
+        echo 'Project setup is not complete. Please run :OpenAIProjectSetup'
+        return ''
+    endif
+
+    let l:projectHomeDirectory = fnamemodify(a:projectPath, ':p')
+	let l:requestsDir = l:projectHomeDirectory . '/requests'
+	let l:responsesDir = l:projectHomeDirectory . '/responses'
+	let l:outputDir = l:projectHomeDirectory . '/output'
+	let l:sourceDir = l:projectHomeDirectory . '/source'
+
+	" set global variables for the project home directory and requests and responses directories
+	let g:OPENAI_PROJECT_HOME_DIR = l:projectHomeDirectory
+	let g:OPENAI_REQUESTS_DIR = l:requestsDir
+	let g:OPENAI_RESPONSES_DIR = l:responsesDir
+	let g:OPENAI_OUTPUT_DIR = l:outputDir
+	let g:OPENAI_SOURCE_DIR = l:sourceDir
+
+    echo 'Project home directory: ' . g:OPENAI_PROJECT_HOME_DIR
+endfunction
+ command! -nargs=1 OpenAISetWorkingProject call SetWorkingProject(<f-args>)
+
+function! GetWorkingProject()
+    echo g:OPENAI_PROJECT_HOME_DIR
+endfunction
+
+command! -nargs=0 OpenAIWorkingProject call GetWorkingProject()
+
+function! ProjectSetupComplete(projectPath)
+    " check that the project path is a directory with the following subdirectories:
+    " requests, responses, output, source
+    " if any of the subdirectories is missing, return false
+    " if all subdirectories exist, return true
+    if !isdirectory(a:projectPath)
+        return 0
+    endif
+    let l:projectHomeDir = fnamemodify(a:projectPath, ':p')
+    let l:requestsDir = l:projectHomeDir . '/requests'
+    let l:responsesDir = l:projectHomeDir . '/responses'
+    let l:outputDir = l:projectHomeDir . '/output'
+    let l:sourceDir = l:projectHomeDir . '/source'
+
+    if !isdirectory(l:requestsDir) || !isdirectory(l:responsesDir) || !isdirectory(l:outputDir) || !isdirectory(l:sourceDir)
+        return 0
+    endif
+
+    return 1
+endfunction
 
