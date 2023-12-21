@@ -10,7 +10,24 @@
 " Within a working directory, there can be multiple projects.
 " To set the working directory to default, use the command :OpenAISetWorkingProject <project_path>
 "
-" 
+" Notes:
+" A thread is created by namespace. When creating a thread message, user specifies the classname and the request message.
+" Using the classname, the assistant determines which namespace the class belong to and creates a thread for that namespace if it doesn't exist.
+" When user requests the assistant to execute the thread, all the messages in the thread are sent to the assistant for processing. The
+" assistant will process the messages in the order they were received. The assistant will also keep track of the state of the thread.
+" The assistant will return the response for each message in the thread. The assistant will also return the state of the thread.
+"
+" Usage:
+" 0. Updated g:OPENAI_PROJECT_HOME_DIR as needed. Using the command :OpenAISetHomeDir <project_path>. Use :OpenAIGetHomeDir to get the current value.
+" 1. Setup working project. This is the cs project containing the files to word with. Command: OpenAISetupProject <project_path>
+" 2. Navigate the the requests directory and create a message file. There should be a sample request file. Note that classname is case sensitive.
+" 3. Submit created message. Command: OpenAICreateMessage <message_file_name>. This should return the created message with a thread id.
+" 4. Execute the thread. Command: OpenAIExecuteThread <thread_id>. This should return the response for each message in the thread. 
+" The assistant has access to all previously created messages - as found in the thread responses.
+"
+" When a new message is created, the same thread will be used only if the classes are in the same namespace. Otherwise a new thread is
+" created for the new namespace.
+"
 set encoding=utf-8
 set fileencoding=utf-8
 
@@ -217,9 +234,14 @@ function! CreateThreadMessage(messageRequest, outputfile)
 	"echo 'requestPayload: ' . l:escapedPayload
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
-	let l:curl_cmd = l:response. l:jsonEncodedPayload . ' -o ' . a:outputfile
+
+    let l:generatedOutputFile = g:OPENAI_REQUESTS_DIR . '/' . l:threadId . '_' . a:outputfile
+
+	let l:curl_cmd = l:response. l:jsonEncodedPayload . ' -o ' . l:generatedOutputFile
     "echo 'curl_cmd - CreateThreadMessage: ' . l:curl_cmd
 	execute 'silent !' . l:curl_cmd
+    " Open the output file
+    execute 'edit ' . l:generatedOutputFile
 endfunction
 
 function! OpenAIAssistantThreadListMessages(threadId, outputfile)
@@ -1035,7 +1057,7 @@ function! GetThreadIdByNamespace(namespace, namespaceJoinThreadJsonFile)
     if has_key(l:threadsJson, a:namespace) && l:threadsJson[a:namespace] != ''
         " Return the thread ID for the existing namespace
         echo 'Thread ID found for namespace: ' . a:namespace
-        return l:threadsJson[a:namespace]
+        let l:threadId = l:threadsJson[a:namespace]
     else
         " Create a new thread for the given namespace
         let l:threadJsonString = CreateOpenAIAssistantThread()
@@ -1043,11 +1065,12 @@ function! GetThreadIdByNamespace(namespace, namespaceJoinThreadJsonFile)
         let l:threadId = json_decode(l:threadJsonString)['id']
         " Add the new namespace and thread ID to the map
         let l:threadsJson[a:namespace] = l:threadId
-		let l:jsonPayload = CreateJSONPayload(l:threadsJson) 
-		"overwrite the file with the updated map
-		call writefile(split(l:jsonPayload, '\n'), l:namespaceThreadJsonFile, 'b')
-		return l:threadId
+        let l:jsonPayload = CreateJSONPayload(l:threadsJson) 
+        "overwrite the file with the updated map
+        call writefile(split(l:jsonPayload, '\n'), l:namespaceThreadJsonFile, 'b')
     endif
+
+    return l:threadId
 endfunction
 
 function! ExecuteThreadMessage(messageJson)
@@ -1098,7 +1121,7 @@ function! GetThreadRunStatus(threadExecusionJson)
 		let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
 	endwhile
 
-	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR . '/thread_message_execution_responses.json')
+	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR .  '/' . l:threadId .'_execution_responses.json')
 	return l:threadRunStatus
 endfunction
 
