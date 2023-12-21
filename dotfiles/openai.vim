@@ -48,7 +48,7 @@ let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/thre
 let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
 let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
 let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_MODEL = 'gpt-3.5-turbo-1106'
+let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-vision-preview'
 
 let g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS = 'The assistant is tasked to work on various .NetCore projects, ' .
     \ 'each involving different files and functionalities. The projects are primarily developed in CSharp. ' .
