@@ -44,10 +44,10 @@ let g:OPENAI_LIST_ASSISTANTS_CMD = 'curl https://api.openai.com/v1/assistants -H
 let g:OPENAI_DELETE_ASSISTANT_CMD = 'curl -X DELETE  https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
 let g:OPENAI_ASSISTANT_THREAD_CMD = 'curl https://api.openai.com/v1/threads -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d ""  '
 let g:OPENAI_DELETE_ASSISTANT_THREAD_CMD = 'curl -X DELETE  https://api.openai.com/v1/threads/{thread_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
+let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
+let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
 let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-1106-preview'
 
 
@@ -256,6 +256,14 @@ function! OpenAIAssistantThreadListMessages(threadId, outputfile)
 	execute 'edit ' . a:outputfile
 endfunction
 
+function! s:CheckJsonTool()
+    " Run a test command with Python's json.tool and capture the output
+    let l:testCmd = 'python -c "import json; print(json.dumps({}))" | python -m json.tool'
+    let l:result = system(l:testCmd)
+    " Check if the command executed successfully
+    return v:shell_error == 0
+endfunction
+
 function! CreateOpenAIAssistantThreadRun(threadId, requestPayload, outputfile)
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
@@ -269,7 +277,7 @@ function! RetrieveOpenAIAssistantThreadRun(threadId, runId, outputfile)
 	let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
 	let l:response = substitute(l:response,'{run_id}',a:runId,'')
 	let l:curl_cmd = l:response . ' -o ' . a:outputfile
-	execute '!' . l:curl_cmd
+	execute 'silent!' . l:curl_cmd
 endfunction
 
 " Define a Vim command that calls the function
@@ -1016,6 +1024,15 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
             let l:namespaceMappingFile = g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json'
             let l:namespaces = s:GetUploadedNamespaces(l:namespaceMappingFile)
             echo 'A total of ' . len(l:namespaces) . ' namespaces found in the project assistant'
+			" if more than one namespace found, check if one of them is 'merged.txt'. If yes, return that namespace
+			if len(l:namespaces) > 1
+				let l:mergedFile = 'merged.txt'
+				" check if the namespce list constains 'merged.txt'
+				if index(l:namespaces, l:mergedFile) != -1
+					echo 'Using namespace: ' . fnamemodify(l:mergedFile, ':t')
+					return [fnamemodify(l:mergedFile, ':t')]
+				endif
+			endif
             return l:namespaces
         endif
 
@@ -1027,6 +1044,16 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 		endif
 		"Get matching namespaces for the given classname
 		let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
+
+		" if more than one namespace found, check if one of them is 'merged.txt'. If yes, return that namespace
+		if len(l:namespaces) > 1
+			let l:mergedFile = 'merged.txt'
+			if index(l:namespaces, l:mergedFile) != -1
+				echo 'Using namespace: ' . fnamemodify(l:mergedFile, ':t')
+				return [fnamemodify(l:mergedFile, ':t')]
+			endif
+		endif
+
 		return l:namespaces
 	endfunction
 
@@ -1085,8 +1112,6 @@ function! CreateJsonWithEmptyValues(fileDict)
     return jsonString
 endfunction
 
-
-
 function! GetThreadIdByNamespace(namespace, namespaceJoinThreadJsonFile)
 	" if namespaceJoinThreadJsonFile is empty, set it to 'openai_namespace_join_thread_mapping.json'
 	let l:namespaceThreadJsonFile = a:namespaceJoinThreadJsonFile
@@ -1141,7 +1166,7 @@ function! ExecuteThreadMessage(messageJson)
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
 	let l:curl_cmd = l:response. l:encodedThreadRunJson . ' -o ' . l:outputfile
-    execute '!' . l:curl_cmd
+    execute 'silent!' . l:curl_cmd
 
     " Get execution status
     let l:threadRunStatus = GetThreadRunStatus(l:outputfile)
@@ -1157,25 +1182,53 @@ endfunction
 " Sample call: :OpenAIExecuteThreadMessage requests/namespace_file_thread_message.json
 command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>)
 
+
+
 function! GetThreadRunStatus(threadExecusionJson)
 	let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
-	" get thread_id and run_id
 	let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
 	let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
 
-	" retrieve thread run status until it is completed
+	let l:counter = 0
+	let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+
 	while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
-		echo 'Thread run status: ' . l:threadRunStatus
-		let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+		if l:counter % 5 == 0
+			echom 'Thread run status: ' . l:threadRunStatus
+		endif
 		call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
 		let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
-        " Sleep for 5 second
-        call timer_start(5000, {-> v:null})
+
+		" Sleep for 5 seconds
+		sleep 5s
+		let l:counter += 1
 	endwhile
 
-	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR .  '/' . l:threadId .'_execution_responses.json')
+	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR . '/' . l:threadId . '_execution_responses.json')
+	execute 'redraw!'
 	return l:threadRunStatus
 endfunction
+
+" function! GetThreadRunStatus(threadExecusionJson)
+"     let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
+"     " get thread_id and run_id
+"     let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
+"     let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
+"
+"     " retrieve thread run status until it is completed
+"     while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
+"         echo 'Thread run status: ' . l:threadRunStatus
+"         let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+"         call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
+"         let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
+"         " Sleep for 5 second
+"         call timer_start(5000, {-> v:null})
+"     endwhile
+"
+"     call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR .  '/' . l:threadId .'_execution_responses.json')
+"     execute 'redraw!'
+"     return l:threadRunStatus
+" endfunction
 
 function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, directoriesToPreserve)
 	let l:outputDir = fnamemodify(a:projectPath, ':t') .  '_project'
