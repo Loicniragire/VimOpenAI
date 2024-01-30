@@ -1,3 +1,4 @@
+
 " OPENAI
 " Directory structure
 " - OPENAI_WORKING_DIR
@@ -30,24 +31,25 @@
 "
 set encoding=utf-8
 
-let g:OPENAI_WORKING_DIR = '~/source/repos/AI_ProjectAssistant/'
-let g:OPENAI_COMPLETION_CMD = 'curl -sS -X POST https://api.openai.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -d @'
+let g:OPENAI_WORKING_DIR = '~/Documents/AI_ProjectAssistant/'
+let g:OPENAI_COMPLETION_CMD = 'curl -X POST https://api.openai.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -d @'
 
-let g:OPENAI_ASSISTANTS_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_FILES_CMD = 'cur -sSl -X POST https://api.openai.com/v1/files -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -F "purpose=assistants" -F "file="@'
-let g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants/{assistant_id}/files -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_DELETE_FILE_CMD = 'curl -sS -X DELETE -sS https://api.openai.com/v1/files/{file_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
+let g:OPENAI_ASSISTANTS_CMD = 'curl -X POST https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_FILES_CMD = 'curl -X POST https://api.openai.com/v1/files -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -F "purpose=assistants" -F "file=@"'
+let g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD = 'curl -X POST https://api.openai.com/v1/assistants/{assistant_id}/files -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
+let g:OPENAI_DELETE_FILE_CMD = 'curl -X DELETE https://api.openai.com/v1/files/{file_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
 let g:OPENAI_RETRIEVE_FILE_CMD = 'curl https://api.openai.com/v1/files/{file_id}/content -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
 let g:OPENAI_LIST_FILES_CMD = 'curl https://api.openai.com/v1/files -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
 let g:OPENAI_LIST_ASSISTANTS_CMD = 'curl https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_DELETE_ASSISTANT_CMD = 'curl -sS -X DELETE  https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_DELETE_ASSISTANT_CMD = 'curl -X DELETE  https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
 let g:OPENAI_ASSISTANT_THREAD_CMD = 'curl https://api.openai.com/v1/threads -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d ""  '
 let g:OPENAI_DELETE_ASSISTANT_THREAD_CMD = 'curl -X DELETE  https://api.openai.com/v1/threads/{thread_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
+let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
+let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl -sS https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
 let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-1106-preview'
+
 
 let g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS = 'The assistant is tasked to work on various .NetCore projects, ' .
     \ 'each involving different files and functionalities. The projects are primarily developed in CSharp. ' .
@@ -81,11 +83,13 @@ function! SetToDefaultWorkingDir()
 	let l:outputDir = l:projectHomeDirectory . 'output'
 	let l:sourceDir = l:projectHomeDirectory . 'source'
 
-	let g:OPENAI_PROJECT_HOME_DIR = l:defaultHome
-	let g:OPENAI_REQUESTS_DIR = l:requestsDir
-	let g:OPENAI_RESPONSES_DIR = l:responsesDir
-	let g:OPENAI_OUTPUT_DIR = l:outputDir
-	let g:OPENAI_SOURCE_DIR = l:sourceDir
+
+	call ClearPersistentVariables()
+	call SetPersistentVariable('OPENAI_PROJECT_HOME_DIR', l:defaultHome)
+	call SetPersistentVariable('OPENAI_REQUESTS_DIR', l:requestsDir)
+	call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
+	call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
+	call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
 
     " Create the directories if they don't exist
     call mkdir(l:projectHomeDirectory, 'p')
@@ -165,6 +169,7 @@ function! DeleteOpenAIAssistant(assistantId)
 	let l:cmd = g:OPENAI_DELETE_ASSISTANT_CMD
 	let l:curl_cmd = substitute(l:cmd,'{assistant_id}',a:assistantId,'')
 	execute '!' . l:curl_cmd
+	call ClearPersistentVariables()
 endfunction
 
 function! CreateOpenAIAssistantThread()
@@ -251,6 +256,14 @@ function! OpenAIAssistantThreadListMessages(threadId, outputfile)
 	execute 'edit ' . a:outputfile
 endfunction
 
+function! s:CheckJsonTool()
+    " Run a test command with Python's json.tool and capture the output
+    let l:testCmd = 'python -c "import json; print(json.dumps({}))" | python -m json.tool'
+    let l:result = system(l:testCmd)
+    " Check if the command executed successfully
+    return v:shell_error == 0
+endfunction
+
 function! CreateOpenAIAssistantThreadRun(threadId, requestPayload, outputfile)
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
@@ -264,7 +277,7 @@ function! RetrieveOpenAIAssistantThreadRun(threadId, runId, outputfile)
 	let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
 	let l:response = substitute(l:response,'{run_id}',a:runId,'')
 	let l:curl_cmd = l:response . ' -o ' . a:outputfile
-	execute '!' . l:curl_cmd
+	execute 'silent!' . l:curl_cmd
 endfunction
 
 " Define a Vim command that calls the function
@@ -1011,6 +1024,15 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
             let l:namespaceMappingFile = g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json'
             let l:namespaces = s:GetUploadedNamespaces(l:namespaceMappingFile)
             echo 'A total of ' . len(l:namespaces) . ' namespaces found in the project assistant'
+			" if more than one namespace found, check if one of them is 'merged.txt'. If yes, return that namespace
+			if len(l:namespaces) > 1
+				let l:mergedFile = 'merged.txt'
+				" check if the namespce list constains 'merged.txt'
+				if index(l:namespaces, l:mergedFile) != -1
+					echo 'Using namespace: ' . fnamemodify(l:mergedFile, ':t')
+					return [fnamemodify(l:mergedFile, ':t')]
+				endif
+			endif
             return l:namespaces
         endif
 
@@ -1022,6 +1044,16 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 		endif
 		"Get matching namespaces for the given classname
 		let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
+
+		" if more than one namespace found, check if one of them is 'merged.txt'. If yes, return that namespace
+		if len(l:namespaces) > 1
+			let l:mergedFile = 'merged.txt'
+			if index(l:namespaces, l:mergedFile) != -1
+				echo 'Using namespace: ' . fnamemodify(l:mergedFile, ':t')
+				return [fnamemodify(l:mergedFile, ':t')]
+			endif
+		endif
+
 		return l:namespaces
 	endfunction
 
@@ -1080,8 +1112,6 @@ function! CreateJsonWithEmptyValues(fileDict)
     return jsonString
 endfunction
 
-
-
 function! GetThreadIdByNamespace(namespace, namespaceJoinThreadJsonFile)
 	" if namespaceJoinThreadJsonFile is empty, set it to 'openai_namespace_join_thread_mapping.json'
 	let l:namespaceThreadJsonFile = a:namespaceJoinThreadJsonFile
@@ -1136,7 +1166,7 @@ function! ExecuteThreadMessage(messageJson)
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
 	let l:curl_cmd = l:response. l:encodedThreadRunJson . ' -o ' . l:outputfile
-    execute '!' . l:curl_cmd
+    execute 'silent!' . l:curl_cmd
 
     " Get execution status
     let l:threadRunStatus = GetThreadRunStatus(l:outputfile)
@@ -1152,25 +1182,53 @@ endfunction
 " Sample call: :OpenAIExecuteThreadMessage requests/namespace_file_thread_message.json
 command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>)
 
+
+
 function! GetThreadRunStatus(threadExecusionJson)
 	let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
-	" get thread_id and run_id
 	let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
 	let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
 
-	" retrieve thread run status until it is completed
+	let l:counter = 0
+	let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+
 	while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
-		echo 'Thread run status: ' . l:threadRunStatus
-		let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+		if l:counter % 5 == 0
+			echom 'Thread run status: ' . l:threadRunStatus
+		endif
 		call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
 		let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
-        " Sleep for 5 second
-        call timer_start(5000, {-> v:null})
+
+		" Sleep for 5 seconds
+		sleep 5s
+		let l:counter += 1
 	endwhile
 
-	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR .  '/' . l:threadId .'_execution_responses.json')
+	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR . '/' . l:threadId . '_execution_responses.json')
+	execute 'redraw!'
 	return l:threadRunStatus
 endfunction
+
+" function! GetThreadRunStatus(threadExecusionJson)
+"     let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
+"     " get thread_id and run_id
+"     let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
+"     let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
+"
+"     " retrieve thread run status until it is completed
+"     while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
+"         echo 'Thread run status: ' . l:threadRunStatus
+"         let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+"         call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
+"         let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
+"         " Sleep for 5 second
+"         call timer_start(5000, {-> v:null})
+"     endwhile
+"
+"     call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR .  '/' . l:threadId .'_execution_responses.json')
+"     execute 'redraw!'
+"     return l:threadRunStatus
+" endfunction
 
 function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, directoriesToPreserve)
 	let l:outputDir = fnamemodify(a:projectPath, ':t') .  '_project'
@@ -1209,11 +1267,50 @@ function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, di
 	call mkdir(l:sourceDir, 'p')
 
 	" set global variables for the project home directory and requests and responses directories
-	let g:OPENAI_PROJECT_HOME_DIR = l:projectHomeDirectory
-	let g:OPENAI_REQUESTS_DIR = l:requestsDir
-	let g:OPENAI_RESPONSES_DIR = l:responsesDir
-	let g:OPENAI_OUTPUT_DIR = l:outputDir
-	let g:OPENAI_SOURCE_DIR = l:sourceDir
+	call ClearPersistentVariables()
+	call SetPersistentVariable('OPENAI_PROJECT_HOME_DIR', l:projectHomeDirectory)
+	call SetPersistentVariable('OPENAI_REQUESTS_DIR', l:requestsDir)
+	call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
+	call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
+	call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
+endfunction
+
+
+" function! SetPersistentVariable(varName, varValue)
+"     " Set the global variable
+"     let g:{a:varName} = a:varValue
+"
+"     " Escape single quotes in varValue
+"     let escapedVarValue = substitute(a:varValue, "'", "''", "g")
+"
+"     " Prepare the command to be saved
+"     let saveCmd = 'let g:' . a:varName . ' = ''' . escapedVarValue . ''''
+"
+"     " Use Vim's execute and redirection to append to the file
+"     execute 'silent! echo "' . saveCmd . '" >> ' . expand('~/.vim_persistent_variables')
+" endfunction
+
+function! SetPersistentVariable(varName, varValue)
+    " Set the global variable
+    let g:{a:varName} = a:varValue
+
+    " Prepare the command to be saved
+    let saveCmd = 'let g:' . a:varName . ' = ''' . a:varValue . ''''
+
+    " Read the current contents of the file
+    let currentContents = readfile(expand('~/.vim_persistent_variables'))
+
+    " Add the new command to the contents
+    call add(currentContents, saveCmd)
+
+    " Write the updated contents back to the file
+    call writefile(currentContents, expand('~/.vim_persistent_variables'))
+endfunction
+
+
+function! ClearPersistentVariables()
+    " Overwrite ~/.vim_persistent_variables with an empty list to clear it
+    call writefile([], expand('~/.vim_persistent_variables'))
 endfunction
 
 function! PreserveAndRecreate(dir, preserveDirs)
@@ -1244,13 +1341,9 @@ function! PreserveAndRecreate(dir, preserveDirs)
     call delete(tempDir, 'rf')
 endfunction
 
-
-
-
 function! SetupProjectAssistant(projectPath, directoryToPreserve)
 	" create a working directory for the project
 	call CreateProjectAssistantWorkingDir(a:projectPath, '', a:directoryToPreserve)
-
     " create a json file with the project path and the source directory
     let l:projectAssistantJson = {"project_path": fnamemodify(a:projectPath, ':p')}
     " stringfy the json payload
@@ -1259,12 +1352,18 @@ function! SetupProjectAssistant(projectPath, directoryToPreserve)
     let l:projectAssistantOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_project_assistant_path_output.json'
     call writefile(split(l:encodedProjectAssistantJson, '\n'), l:projectAssistantOutputFile, 'b')
 
+	echo "0. Starting....Extracting C# files from directory: " . a:projectPath
 	call ListFilesWithExtensions(a:projectPath, {'cs': 'txt'}, g:OPENAI_SOURCE_DIR)
 
+	echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
     call MergeFiles(g:OPENAI_SOURCE_DIR, l:mergedFile)
+
+	echo "2. Starting....Grouping files by namespace"
 	call GroupFilesByNamespace(g:OPENAI_SOURCE_DIR, l:mergedFile)
 	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
+
+	echo "3. Starting....Created project assistant: " . l:assistantName
 	let l:assistantResponse = CreateOpenAICsProjectAssistant(g:OPENAI_SOURCE_DIR, l:assistantName)
 
     function! s:CreateSampleJsonMessageRequest(dir)
@@ -1281,8 +1380,12 @@ function! SetupProjectAssistant(projectPath, directoryToPreserve)
     endfunction
 
 	" create a sample json message request
+	echo "4. Starting....Created sample json message request: " . g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json'
 	call s:CreateSampleJsonMessageRequest(g:OPENAI_REQUESTS_DIR)
 
+	echo "5. Done....Setup complete."
+	" Refresh the buffer
+	execute 'redraw!'
 	return g:OPENAI_PROJECT_HOME_DIR
 endfunction
 
@@ -1381,12 +1484,12 @@ function! SetWorkingProject(projectPath)
 	let l:sourceDir = l:projectHomeDirectory . '/source'
 
 	" set global variables for the project home directory and requests and responses directories
-	let g:OPENAI_PROJECT_HOME_DIR = l:projectHomeDirectory
-	let g:OPENAI_REQUESTS_DIR = l:requestsDir
-	let g:OPENAI_RESPONSES_DIR = l:responsesDir
-	let g:OPENAI_OUTPUT_DIR = l:outputDir
-	let g:OPENAI_SOURCE_DIR = l:sourceDir
-
+	call ClearPersistentVariables()
+	call SetPersistentVariable('OPENAI_PROJECT_HOME_DIR', l:projectHomeDirectory)
+	call SetPersistentVariable('OPENAI_REQUESTS_DIR', l:requestsDir)
+	call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
+	call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
+	call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
     echo 'Working Project set to: ' . g:OPENAI_PROJECT_HOME_DIR
 endfunction
  command! -nargs=1 OpenAISetWorkingProject call SetWorkingProject(<f-args>)
@@ -1502,3 +1605,8 @@ function! GetDirectoryName(dir)
     let l:trimmedPath = substitute(l:normalizedPath, '/\+$', '', '')
     return l:trimmedPath
 endfunction
+
+if filereadable(expand("~/.vim_persistent_variables"))
+	execute readfile(expand("~/.vim_persistent_variables"), 'b')->join("\n")
+endif
+
