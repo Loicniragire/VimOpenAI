@@ -30,25 +30,33 @@
 " created for the new namespace.
 "
 set encoding=utf-8
-
 let g:OPENAI_WORKING_DIR = '~/Documents/AI_ProjectAssistant/'
+
+let g:OPENAI_VECTOR_STORE_CMD = 'curl -X POST https://api.openai.com/v1/vector_stores -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+let g:OPENAI_DELETE_VECTOR_STORE_CMD = 'curl -sS -X DELETE https://api.openai.com/v1/vector_stores/{vector_store_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2"'
+
+let g:OPENAI_VECTOR_STORE_FILE_CMD = 'curl -sS -X POST https://api.openai.com/v1/vector_stores/{vector_store_id}/file_batches -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+
+let g:OPENAI_ASSIGN_VECTOR_STORE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+
 let g:OPENAI_COMPLETION_CMD = 'curl -sS -X POST https://api.openai.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -d @'
 
-let g:OPENAI_ASSISTANTS_CMD = 'curl -X POST https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
+let g:OPENAI_ASSISTANTS_CMD = 'curl -X POST https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 let g:OPENAI_FILES_CMD = 'curl -sS -X POST https://api.openai.com/v1/files -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -F "purpose=assistants" -F "file=@"'
-let g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants/{assistant_id}/files -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
+let g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants/{assistant_id}/files -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 let g:OPENAI_DELETE_FILE_CMD = 'curl -sS -X DELETE https://api.openai.com/v1/files/{file_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
 let g:OPENAI_RETRIEVE_FILE_CMD = 'curl https://api.openai.com/v1/files/{file_id}/content -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
 let g:OPENAI_LIST_FILES_CMD = 'curl https://api.openai.com/v1/files -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
-let g:OPENAI_LIST_ASSISTANTS_CMD = 'curl https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_DELETE_ASSISTANT_CMD = 'curl -sS -X DELETE  https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_CMD = 'curl https://api.openai.com/v1/threads -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d ""  '
-let g:OPENAI_DELETE_ASSISTANT_THREAD_CMD = 'curl -X DELETE  https://api.openai.com/v1/threads/{thread_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl "https://api.openai.com/v1/threads/{thread_id}/messages?limit=1" -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" -d '
-let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v1" '
-let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-1106-preview'
+let g:OPENAI_LIST_ASSISTANTS_CMD = 'curl https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
+let g:OPENAI_DELETE_ASSISTANT_CMD = 'curl -sS -X DELETE  https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
+let g:OPENAI_ASSISTANT_THREAD_CMD = 'curl https://api.openai.com/v1/threads -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d ""  '
+let g:OPENAI_DELETE_ASSISTANT_THREAD_CMD = 'curl -X DELETE  https://api.openai.com/v1/threads/{thread_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
+let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl "https://api.openai.com/v1/threads/{thread_id}/messages?limit=1" -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
+let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
+" let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-1106-preview'
+let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-turbo-2024-04-09'
 
 
 let g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS = 'The assistant is tasked to work on various .NetCore projects, ' .
@@ -67,7 +75,8 @@ let g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS = 'The assistant is tasked to work
     \ '4. Testing and Documentation: Develop testing strategies, including unit and integration tests, ' .
     \ 'to ensure the robustness of new or modified code. Produce concise documentation for the implemented code, ' .
     \ 'outlining its purpose, usage, and any special considerations. ' .
-    \ '5. File Management: Manage and organize project files efficiently, ensuring that the project structure is maintained and easily navigable. ' .
+	\ '5. Format all generated code or content text to make the readible and understandable. ' .
+    \ '6. File Management: Manage and organize project files efficiently, ensuring that the project structure is maintained and easily navigable. ' .
     \ 'Expected Deliverables: For each project, deliver a report on code analysis, implemented features or enhancements with corresponding CSharp code, ' .
     \ 'testing strategies, and documentation. Projects should be left in a clean, well-documented state. ' .
     \ 'General Considerations: Adapt to the specific requirements of each project, including but not limited to different .NetCore versions, ' .
@@ -414,52 +423,119 @@ endfunction
 " Returns:
 " Assistant creation response
 function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
+
+	echo "0. Starting....Extracting source code files from directory: " . a:directoryPath
+	call ListFilesWithExtensions(a:directoryPath, {'cs': 'txt'}, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs'])
+
+	echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
+    let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
+    call MergeFiles(g:OPENAI_SOURCE_DIR, l:mergedFile)
+
+	echo "2. Starting....Grouping files by namespace"
+	call GroupFilesByNamespace(g:OPENAI_SOURCE_DIR, l:mergedFile)
+	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
+
+	echo "3. Starting....Created project assistant: " . l:assistantName
+
+
 	"get the full path of the directory
 	let l:directoryPath = fnamemodify(a:directoryPath, ':p')
 	echo 'Creating assistant for project: ' . a:projectName . ' with files in directory: ' . l:directoryPath
 	"Generate an assistant for the project
 	let l:assistantId = CreateProjectAssistant(a:projectName, 'A generic .NetCore project assistant', g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS)
-	"let l:assistantId = CreateProjectAssistant(a:projectName, "A generic .NetCore project assistant", "Test...")
+
+	" Create a vector store and upload project files
+	let l:vectorStoreName = a:projectName
+	let l:vectoreStoreExpirationDays = 1
+	let l:vectorStoreId = CreateVectorStore(l:vectorStoreName, l:vectoreStoreExpirationDays)
+	let l:uploadedFileIds = UploadFiles(g:OPENAI_SOURCE_DIR, 'merged.txt')
+	let l:uploadedFileIdsReq = json_encode(s:JSONStringify({"file_ids": l:uploadedFileIds}) )
+
+	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_files_to_vector_store_output.json'
+	let l:cmd = g:OPENAI_VECTOR_STORE_FILE_CMD
+	let l:response = substitute(l:cmd,'{vector_store_id}',l:vectorStoreId,'')
+	let l:curl_cmd = l:response . l:uploadedFileIdsReq . ' -o ' . l:outputfile
+	" assign uploaded files to vector store
+	execute 'silent !' . l:curl_cmd
+    " Maximum number of attempts to check the 'completed' status
+    let l:max_attempts = 12
+
+    " Start polling the output file
+    for i in range(l:max_attempts)
+        " Wait for a bit before checking the status
+		call timer_start(5000, {-> v:null})
+
+        " Read and parse the JSON output
+        let l:json_output = json_decode(join(readfile(l:outputfile), "\n"))
+
+        " Check if the status is 'completed'
+        if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
+            echo "Vector store creation completed successfully. Id: " . l:json_output['id']
+            break
+        elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
+            echoerr "Error in creating vector store: " . l:json_output['error_message']
+            break
+        endif
+
+        " Provide feedback on the status in the command line
+        echo "Checking completion status... (attempt " . (i+1) . ")"
+    endfor
+	" redraw!
+
+	let l:vectorStorePayload = GetVectorStoreToolResources(l:vectorStoreId, l:uploadedFileIds)
+	echomsg 'Vector store payload: ' . l:vectorStorePayload
+
+
+	let l:vectorStoreOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_assign_vector_store_to_assistant_output.json'
+	let l:vectorStoreAssignCmd = g:OPENAI_ASSIGN_VECTOR_STORE_TO_ASSISTANT_CMD
+	let l:vectorStoreAssignResponse = substitute(l:vectorStoreAssignCmd, '{assistant_id}', l:assistantId, '')
+	let l:vectorStoreAssignCurlCmd = l:vectorStoreAssignResponse . shellescape(l:vectorStorePayload) . ' -o ' . l:vectorStoreOutputFile
+
+	echomsg 'Vector store assign cmd: ' . l:vectorStoreAssignCurlCmd
+	execute '!' . l:vectorStoreAssignCurlCmd
+
+	" execute 'edit ' . l:vectorStoreOutputFile
 
     "echo 'Assistant created with id: ' . l:assistantId
     "
 	" Upload all files in the directory to OpenAI
-	let l:uploadedFiles = OpenAIUploadAssistantFiles(l:directoryPath)
+	" let l:uploadedFiles = OpenAIUploadAssistantFiles(l:directoryPath)
 	" write the json responses to a file
-	call WriteJSONToFile(l:uploadedFiles, g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json')
+	call WriteJSONToFile(l:uploadedFileIds, g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json')
 
-	let l:keys = ExtractKeys(l:uploadedFiles, ['id', 'filename'])
+	" let l:keys = ExtractKeys(l:uploadedFiles, ['id', 'filename'])
 	" create a dictionary with filename as key and id as value
-	let l:fileIdMap = MapValues(l:keys, 'filename', 'id')
+	" let l:fileIdMap = MapValues(l:keys, 'filename', 'id')
 
 	" get a json string of the filenames with empty values
-	let l:fileThreadMapping = CreateJsonWithEmptyValues(l:fileIdMap)
+	" let l:fileThreadMapping = CreateJsonWithEmptyValues(l:fileIdMap)
 	" write the json string to a file
-	call writefile(split(l:fileThreadMapping, '\n'), g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json', 'b')
+	" call writefile(split(l:fileThreadMapping, '\n'), g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json', 'b')
 
 	" assign the cs files to the assistant
     " Define a list to store the json responses as strings
-    let l:json_responses = []
-
+    " let l:json_responses = []
+    "
 	" loop through the fileIdMap and create a json payload with "file_id": set to the dictionary value
-	for [key, value] in items(l:fileIdMap)
-        let l:fileIdMapJson = "{" . "\"file_id\": " . '"' . value . '"' .  "}"
-		let l:fileAssignPayload = json_encode(l:fileIdMapJson)
-		let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_assign_file_to_assistant_output.json'
-
-		let l:cmd = g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD
-		let l:response = substitute(l:cmd,'{assistant_id}',l:assistantId,'')
-		let l:curl_cmd = l:response. l:fileAssignPayload . ' -o ' . l:outputfile
-		execute 'silent !' . l:curl_cmd
-        "
-		" Read the content of the output file as a string
-		let output = join(readfile(l:outputfile), "\n")
-
-		" Add the response string to the list
-		call add(l:json_responses, output)
-	endfor
-
-	return l:json_responses
+	" for [key, value] in items(l:fileIdMap)
+    "     let l:fileIdMapJson = "{" . "\"file_id\": " . '"' . value . '"' .  "}"
+	"     let l:fileAssignPayload = json_encode(l:fileIdMapJson)
+	"     let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_assign_file_to_assistant_output.json'
+    "
+	"     let l:cmd = g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD
+	"     let l:response = substitute(l:cmd,'{assistant_id}',l:assistantId,'')
+	"     let l:curl_cmd = l:response. l:fileAssignPayload . ' -o ' . l:outputfile
+	"     execute 'silent !' . l:curl_cmd
+    "     "
+	"     " Read the content of the output file as a string
+	"     let output = join(readfile(l:outputfile), "\n")
+    "
+	"     " Add the response string to the list
+	"     call add(l:json_responses, output)
+	" endfor
+    "
+	" return l:json_responses
+	return l:vectorStorePayload
 endfunction
 
 
@@ -667,6 +743,156 @@ function! OpenAIUploadAssistantFiles(directoryPath)
     return l:json_responses
 endfunction
 
+" Vector Store Functions
+function! VectorCreateJsonPayload(name, expirationDays)
+	function! s:CreateExpiresAfter(anchor, days)
+		return '{"anchor": "' . a:anchor . '", "days": ' . a:days . '}'
+	endfunction
+
+	return '{"name": "' . a:name . '", "expires_after": ' . s:CreateExpiresAfter('last_active_at', a:expirationDays) . '}'
+endfunction
+
+function! CreateVectorStore(name, expirationDays)
+    let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_create_vector_store_output.json'
+    let l:cmd = g:OPENAI_VECTOR_STORE_CMD . json_encode(VectorCreateJsonPayload(a:name, a:expirationDays))
+    let l:curl_cmd = l:cmd . ' -o ' . l:outputfile
+    execute 'silent !' . l:curl_cmd
+
+    " Maximum number of attempts to check the 'completed' status
+    let l:max_attempts = 12
+
+    " Start polling the output file
+    for i in range(l:max_attempts)
+        " Wait for a bit before checking the status
+		call timer_start(5000, {-> v:null})
+
+        " Read and parse the JSON output
+        let l:json_output = json_decode(join(readfile(l:outputfile), "\n"))
+
+        " Check if the status is 'completed'
+        if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
+            echo "Vector store creation completed successfully. Id: " . l:json_output['id']
+			redraw!
+			return l:json_output['id']
+            break
+        elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'expired'
+            echoerr "Error in creating vector store: " . l:json_output['error_message']
+            break
+        endif
+
+        " Provide feedback on the status in the command line
+        echo "Checking completion status... (attempt " . (i+1) . ")"
+    endfor
+
+    if i == l:max_attempts
+        echoerr "Failed to verify completion after " . l:max_attempts . " attempts."
+    endif
+endfunction
+
+
+function! GetVectorStoreToolResources(vectorStoreId, fileIds)
+    " Prepare the dictionary structures
+    let l:tool_resources = {
+    \   'file_search': {
+    \       'vector_store_ids': [a:vectorStoreId]
+    \   },
+    \   'code_interpreter': {
+    \       'file_ids': a:fileIds
+    \   }
+    \}
+
+    " Encode the complete dictionary to JSON
+    let l:request = json_encode({'tool_resources': l:tool_resources})
+
+    return l:request
+endfunction
+
+function! DeleteVectorStore(vectorStoreId)
+	let l:cmd = g:OPENAI_DELETE_VECTOR_STORE_CMD
+	let l:curl_cmd = substitute(l:cmd,'{vector_store_id}',a:vectorStoreId,'')
+	execute '!' . l:curl_cmd
+endfunction
+
+
+function! UploadFilesToVectorStore(sourceDirectory, vectorStoreName, expirationDays)
+	let l:vectorStoreId = CreateVectorStore(a:vectorStoreName, a:expirationDays)
+	let l:uploadedFileIds = json_encode(s:JSONStringify({"file_ids": UploadFiles(a:sourceDirectory,'')}) )
+
+	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_files_to_vector_store_output.json'
+	let l:cmd = g:OPENAI_VECTOR_STORE_FILE_CMD
+	let l:response = substitute(l:cmd,'{vector_store_id}',l:vectorStoreId,'')
+	let l:curl_cmd = l:response . l:uploadedFileIds . ' -o ' . l:outputfile
+	execute 'silent !' . l:curl_cmd
+	redraw!
+	return l:vectorStoreId
+endfunction
+
+
+" End Vector Store File Functions
+
+" Uploads files and returns the file IDs.
+" If a filename is provided, it returns the file ID for that specific file. Otherwise, it returns all file IDs.
+" Parameters:
+" directoryPath: Path to the directory containing the files to upload
+" returnFileIdByFilename: Filename to match and return the file ID
+" Returns:
+" List of file IDs
+function! UploadFiles(directoryPath, returnFileIdByFilename)
+    " If directoryPath is not a directory, return
+    if !isdirectory(a:directoryPath)
+        echo 'Directory does not exist: ' . a:directoryPath
+        return
+    endif
+
+    let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+    " Define a list to store file IDs
+    let l:file_ids = []
+    let l:matched_file_id = ''
+
+    " Loop through all the files in the directory
+    for file in split(glob(a:directoryPath . '/*'), '\n')
+        " Skip if item is an empty string (happens when glob finds nothing)
+        if empty(file)
+            continue
+        endif
+        " Check if item is a directory
+        if isdirectory(file)
+            " Recursively list and upload files in this directory
+            let l:child_file_ids = UploadFiles(file, a:returnFileIdByFilename)
+            " Merge child directory file IDs into the main list
+            call extend(l:file_ids, l:child_file_ids)
+        elseif filereadable(file)
+            " Upload the file
+            let l:cmd = 'curl -sS -X POST https://api.openai.com/v1/files -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -F "purpose=assistants" -F "file=@"' . shellescape(file, 1)
+            let l:curl_cmd = l:cmd . ' -o ' . l:outputfile
+            execute 'silent ! ' . l:curl_cmd
+
+            " Immediately read and process the file upload response
+            let output = join(readfile(l:outputfile), "\n")
+            let json_response = json_decode(output)
+
+            " Extract the 'id' from the JSON response
+            if has_key(json_response, 'id')
+                let file_id = json_response['id']
+                call add(l:file_ids, file_id)
+                " Check if the filename matches the provided parameter
+                if !empty(a:returnFileIdByFilename) && file =~ a:returnFileIdByFilename
+                    let l:matched_file_id = file_id
+                endif
+            endif
+        endif
+    endfor
+
+    redraw!
+
+    " Return either the matched file ID or all file IDs
+    if !empty(l:matched_file_id)
+        return [l:matched_file_id]
+    else
+        return l:file_ids
+    endif
+endfunction
+
 " Define the function
 function! ExtractKeys(jsonArray, keys)
     " Create a dictionary to store the results
@@ -765,7 +991,7 @@ endfunction
 	":echo CreateAssistantRequestJSONPayload("test assistant","a simple model for testing","You perform actions
 " on numbers")
 function! CreateAssistantRequestJSONPayload(assistantName, assistantDescription, assistantInstructions)
-    let l:tools = [{"type":"code_interpreter"},{"type":"retrieval"}]
+    let l:tools = [{"type":"code_interpreter"},{"type":"file_search"}]
     let l:stringfyTools = CreateJSONPayload(l:tools)
 
     let l:payload = "{" .  "\"model\": " . '"' . g:OPENAI_ASSISTANT_MODEL . '",' . "\"name\": " . '"' . a:assistantName . '",' .  "\"description\": " . '"' . a:assistantDescription . '",' . "\"instructions\": " . '"' . a:assistantInstructions . '",' . "\"tools\": "  . l:stringfyTools .  "}"
@@ -835,7 +1061,7 @@ function! GroupFilesByNamespace(dir, ignoreFilename)
 				" Match namespace declaration with optional following characters
 				if line =~ '^namespace\s*\(\S\+\)\?\s*[{;]'
 					if line =~ '^global using\s+\S\+;'
-						break;
+						break
 					endif
 					" Default to an anonymous namespace placeholder if no name is captured
 					let namespace = matchstr(line, '^namespace\s*\(\S\+\)\?\s*[{;]')
@@ -1347,18 +1573,20 @@ function! SetupProjectAssistant(projectPath, directoryToPreserve)
     let l:projectAssistantOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_project_assistant_path_output.json'
     call writefile(split(l:encodedProjectAssistantJson, '\n'), l:projectAssistantOutputFile, 'b')
 
-	echo "0. Starting....Extracting source code files from directory: " . a:projectPath
-	call ListFilesWithExtensions(a:projectPath, {'cs': 'txt'}, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs'])
+	" TODO: Moved to CreateOpenAICsProjectAssistant()
+	" echo "0. Starting....Extracting source code files from directory: " . a:projectPath
+	" call ListFilesWithExtensions(a:projectPath, {'cs': 'txt'}, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs'])
+    "
+	" echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
+    " let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
+    " call MergeFiles(g:OPENAI_SOURCE_DIR, l:mergedFile)
+    "
+	" echo "2. Starting....Grouping files by namespace"
+	" call GroupFilesByNamespace(g:OPENAI_SOURCE_DIR, l:mergedFile)
+	" let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
+    "
+	" echo "3. Starting....Created project assistant: " . l:assistantName
 
-	echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
-    let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
-    call MergeFiles(g:OPENAI_SOURCE_DIR, l:mergedFile)
-
-	echo "2. Starting....Grouping files by namespace"
-	call GroupFilesByNamespace(g:OPENAI_SOURCE_DIR, l:mergedFile)
-	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
-
-	echo "3. Starting....Created project assistant: " . l:assistantName
 	let l:assistantResponse = CreateOpenAICsProjectAssistant(g:OPENAI_SOURCE_DIR, l:assistantName)
 
     function! s:CreateSampleJsonMessageRequest(dir)
@@ -1604,4 +1832,3 @@ endfunction
 if filereadable(expand("~/.vim_persistent_variables"))
 	execute readfile(expand("~/.vim_persistent_variables"), 'b')->join("\n")
 endif
-
