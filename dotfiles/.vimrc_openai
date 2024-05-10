@@ -32,6 +32,8 @@
 set encoding=utf-8
 let g:OPENAI_WORKING_DIR = '~/Documents/AI_ProjectAssistant/'
 
+let g:OPENAI_LIST_VECTOR_STORES_CMD = 'curl https://api.openai.com/v1/vector_stores -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2"'
+
 let g:OPENAI_VECTOR_STORE_CMD = 'curl -X POST https://api.openai.com/v1/vector_stores -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 let g:OPENAI_DELETE_VECTOR_STORE_CMD = 'curl -sS -X DELETE https://api.openai.com/v1/vector_stores/{vector_store_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2"'
 
@@ -203,21 +205,29 @@ function! DeleteOpenAIAssistantThread(threadId)
 	execute '!' . l:cmd
 endfunction
 
-function! MessageJsonPayload(message, fileIds)
+function! MessageJsonPayload(message)
 	let l:messageRole = 'user'
-	let l:file_ids = CreateJSONPayload(a:fileIds)
-	let l:payload = "{" .  "\"role\": "  . '"'. l:messageRole . '",' .  "\"content\": " . '"' . a:message . '",' .  "\"file_ids\": " . l:file_ids .  "}"
+	" let l:payload = "{" .  "\"role\": "  . '"'. l:messageRole . '",' .  "\"content\": " . '"' . a:message . '",' .  "\"file_ids\": " . l:file_ids .  "}"
      "return json_encode(l:payload)
-     return l:payload
+	 let l:payload = {
+				 \ 'role': l:messageRole,
+				 \ 'content': a:message
+				 \}
+     return json_encode(l:payload)
 endfunction
 
-function! ThreadMessageJsonPayload(threadId, message, fileIds)
-	let l:file_ids = CreateJSONPayload(a:fileIds)
-	return "{" .  "\"threadId\": " . '"' . a:threadId . '",' . "\"message\": " . '"' . a:message . '",' . "\"fileIds\":"  . l:file_ids .  "}"
+function! ThreadMessageJsonPayload(threadId, message)
+	let l:payload = {
+				\ 'threadid': a:threadId,
+				\ 'message': a:message
+				\}
+	return json_encode(l:payload)
+
+
+	" return "{" .  "\"threadId\": " . '"' . a:threadId . '",' . "\"message\": " . '"' . a:message . '",' . "\"fileIds\":"  . l:file_ids .  "}"
 endfunction
 
 function! CreateThreadMessage(messageRequest, outputfile)
-	let l:fileIds = []
 	let jsonObj = json_decode(a:messageRequest)
 
 	" convert json object to dictionary
@@ -226,19 +236,15 @@ function! CreateThreadMessage(messageRequest, outputfile)
 		let l:jsonObjDict[key] = value
 	endfor
 
-	if has_key(jsonObjDict, "threadId") && has_key(jsonObjDict, "message")
-		let l:threadId = jsonObjDict["threadId"]
+	if has_key(jsonObjDict, "threadid") && has_key(jsonObjDict, "message")
+		let l:threadId = jsonObjDict["threadid"]
 		let l:messageContent = jsonObjDict["message"]
-		"check if it has optional fileIds key
-		if has_key(jsonObjDict, "fileIds")
-			let l:fileIds = jsonObjDict["fileIds"]
-		endif
 	else
 		echoerr "Invalid JSON structure: 'threadid' or 'message' key not found"
 		return
 	endif
 
-	let l:requestPayload = MessageJsonPayload(l:messageContent, l:fileIds)
+	let l:requestPayload = MessageJsonPayload(l:messageContent)
     let l:jsonEncodedPayload = json_encode(l:requestPayload)
 
 	" Properly escape the JSON payload for shell command
@@ -410,6 +416,34 @@ function! ListFilesWithExtensions(directoryPath, extMap, outputDir, ignoreFiles)
     " Start the recursive listing and copying with the ignore list
     call s:ListDirRecursively(a:directoryPath, a:extMap, a:outputDir, a:ignoreFiles)
 endfunction
+
+function! GetUploadedFileIds(outputfile, maxFiles)
+    " Read the entire file and decode the top-level JSON array
+    let json_strings = json_decode(join(readfile(a:outputfile), "\n"))
+    let l:uploadedFileIds = []
+    let l:filename = ''
+
+    " Check if there are more than 20 items, if so set a specific filename to filter on
+    if len(json_strings) > a:maxFiles
+        let l:filename = 'merged.txt'
+    endif
+
+    " Iterate over each JSON string in the array
+    for json_str in json_strings
+        " Decode each JSON string into a dictionary
+        let item = json_decode(json_str)
+
+        " If a specific filename is set, match it; otherwise, add all file IDs
+        if !empty(l:filename) && has_key(item, 'filename') && item['filename'] == l:filename
+            call add(l:uploadedFileIds, item['id'])
+        elseif empty(l:filename)
+            call add(l:uploadedFileIds, item['id'])
+        endif
+    endfor
+
+    return l:uploadedFileIds
+endfunction
+
 " Define a Vim command that calls the function with a map of extensions
 "command! -nargs=1 ExtractCsFiles call ListFilesWithExtensions(<f-args>, {'cs': 'txt'}, fnamemodify(<f-args>, ':t') .  '_project')
 
@@ -448,38 +482,45 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 	let l:vectorStoreName = a:projectName
 	let l:vectoreStoreExpirationDays = 1
 	let l:vectorStoreId = CreateVectorStore(l:vectorStoreName, l:vectoreStoreExpirationDays)
-	let l:uploadedFileIds = UploadFiles(g:OPENAI_SOURCE_DIR, 'merged.txt')
-	let l:uploadedFileIdsReq = json_encode(s:JSONStringify({"file_ids": l:uploadedFileIds}) )
+	call UploadFiles(g:OPENAI_SOURCE_DIR)
+	let l:uploaded_file_ids_output = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
+	let l:uploadedFileIds = GetUploadedFileIds(l:uploaded_file_ids_output, 20)
+
+	" let l:uploadedFileIdsReq = json_encode(s:JSONStringify({"file_ids": l:uploadedFileIds}) )
+	let l:uploadedFileIdsReq = json_encode({"file_ids": l:uploadedFileIds}) 
+	echomsg 'Uploaded file ids: ' . l:uploadedFileIdsReq
 
 	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_files_to_vector_store_output.json'
 	let l:cmd = g:OPENAI_VECTOR_STORE_FILE_CMD
 	let l:response = substitute(l:cmd,'{vector_store_id}',l:vectorStoreId,'')
-	let l:curl_cmd = l:response . l:uploadedFileIdsReq . ' -o ' . l:outputfile
+	let l:curl_cmd = l:response . shellescape(l:uploadedFileIdsReq) . ' -o ' . l:outputfile
+	echomsg 'curl_cmd: ' . l:curl_cmd
+
 	" assign uploaded files to vector store
 	execute 'silent !' . l:curl_cmd
-    " Maximum number of attempts to check the 'completed' status
-    let l:max_attempts = 12
+	" Maximum number of attempts to check the 'completed' status
+	let l:max_attempts = 12
 
-    " Start polling the output file
-    for i in range(l:max_attempts)
-        " Wait for a bit before checking the status
+	" Start polling the output file
+	for i in range(l:max_attempts)
+		" Wait for a bit before checking the status
 		call timer_start(5000, {-> v:null})
 
-        " Read and parse the JSON output
-        let l:json_output = json_decode(join(readfile(l:outputfile), "\n"))
+		" Read and parse the JSON output
+		let l:json_output = json_decode(join(readfile(l:outputfile), "\n"))
 
-        " Check if the status is 'completed'
-        if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
-            echo "Vector store creation completed successfully. Id: " . l:json_output['id']
-            break
-        elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
-            echoerr "Error in creating vector store: " . l:json_output['error_message']
-            break
-        endif
+		" Check if the status is 'completed'
+		if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
+			echo "Vector store creation completed successfully. Id: " . l:json_output['id']
+			break
+		elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
+			echoerr "Error in creating vector store: " . l:json_output['error_message']
+			break
+		endif
 
-        " Provide feedback on the status in the command line
-        echo "Checking completion status... (attempt " . (i+1) . ")"
-    endfor
+		" Provide feedback on the status in the command line
+		echo "Checking completion status... (attempt " . (i+1) . ")"
+	endfor
 	" redraw!
 
 	let l:vectorStorePayload = GetVectorStoreToolResources(l:vectorStoreId, l:uploadedFileIds)
@@ -491,50 +532,10 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 	let l:vectorStoreAssignResponse = substitute(l:vectorStoreAssignCmd, '{assistant_id}', l:assistantId, '')
 	let l:vectorStoreAssignCurlCmd = l:vectorStoreAssignResponse . shellescape(l:vectorStorePayload) . ' -o ' . l:vectorStoreOutputFile
 
-	echomsg 'Vector store assign cmd: ' . l:vectorStoreAssignCurlCmd
+	" echomsg 'Vector store assign cmd: ' . l:vectorStoreAssignCurlCmd
 	execute '!' . l:vectorStoreAssignCurlCmd
-
-	" execute 'edit ' . l:vectorStoreOutputFile
-
-    "echo 'Assistant created with id: ' . l:assistantId
-    "
-	" Upload all files in the directory to OpenAI
-	" let l:uploadedFiles = OpenAIUploadAssistantFiles(l:directoryPath)
-	" write the json responses to a file
-	call WriteJSONToFile(l:uploadedFileIds, g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json')
-
-	" let l:keys = ExtractKeys(l:uploadedFiles, ['id', 'filename'])
-	" create a dictionary with filename as key and id as value
-	" let l:fileIdMap = MapValues(l:keys, 'filename', 'id')
-
-	" get a json string of the filenames with empty values
-	" let l:fileThreadMapping = CreateJsonWithEmptyValues(l:fileIdMap)
-	" write the json string to a file
-	" call writefile(split(l:fileThreadMapping, '\n'), g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json', 'b')
-
-	" assign the cs files to the assistant
-    " Define a list to store the json responses as strings
-    " let l:json_responses = []
-    "
-	" loop through the fileIdMap and create a json payload with "file_id": set to the dictionary value
-	" for [key, value] in items(l:fileIdMap)
-    "     let l:fileIdMapJson = "{" . "\"file_id\": " . '"' . value . '"' .  "}"
-	"     let l:fileAssignPayload = json_encode(l:fileIdMapJson)
-	"     let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_assign_file_to_assistant_output.json'
-    "
-	"     let l:cmd = g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD
-	"     let l:response = substitute(l:cmd,'{assistant_id}',l:assistantId,'')
-	"     let l:curl_cmd = l:response. l:fileAssignPayload . ' -o ' . l:outputfile
-	"     execute 'silent !' . l:curl_cmd
-    "     "
-	"     " Read the content of the output file as a string
-	"     let output = join(readfile(l:outputfile), "\n")
-    "
-	"     " Add the response string to the list
-	"     call add(l:json_responses, output)
-	" endfor
-    "
-	" return l:json_responses
+	" let l:ids = json_encode(l:uploadedFileIds)
+	call WriteJSONToFile(l:uploadedFileIds, g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json')
 	return l:vectorStorePayload
 endfunction
 
@@ -578,6 +579,7 @@ function! MapValues(input_dict, search_key, search_value)
 endfunction
 
 
+
 function! WriteJSONToFile(jsonArray, filename)
     " Check if jsonArray is indeed a list
     if type(a:jsonArray) != type([])
@@ -585,33 +587,20 @@ function! WriteJSONToFile(jsonArray, filename)
         return
     endif
 
-    " Start the JSON array string with indentation
-    let l:jsonString = "[\n"
-
-    " Iterate over each JSON string in the array
-    for idx in range(len(a:jsonArray))
-        let jsonStr = a:jsonArray[idx]
-        " Validate that jsonStr is a string
-        if type(jsonStr) != type('')
+    " Validate that each item in jsonArray is a string
+    for item in a:jsonArray
+        if type(item) != type('')
             echoerr 'Invalid input: each item in jsonArray should be a string'
             return
         endif
-        " Add this JSON string to the array string with indentation
-        let l:jsonString .= '    ' . jsonStr
-        " Add a comma except for the last element, and start a new line
-        if idx < len(a:jsonArray) - 1
-            let l:jsonString .= ','
-        endif
-        let l:jsonString .= "\n"
     endfor
 
-    " Close the array string
-    let l:jsonString .= ']'
+    " Use json_encode to handle all JSON formatting
+    let l:jsonString = json_encode(a:jsonArray)
 
-    " Write the JSON array string to the file
+    " Write the JSON string to the file
     call writefile(split(l:jsonString, '\n'), a:filename, 'b')
 endfunction
-
 
 " Function to delete all files uploaded to OpenAI Assistant.
 " Parameters:
@@ -744,6 +733,60 @@ function! OpenAIUploadAssistantFiles(directoryPath)
 endfunction
 
 " Vector Store Functions
+
+" Function to list all vector stores
+" It outputs the list of vector stores to a file and returns a value indicating whether there are more vector stores to list
+function! ListVectorStores(outputfile)
+	let l:cmd = g:OPENAI_LIST_VECTOR_STORES_CMD
+	let l:curl_cmd = l:cmd . ' -o ' . a:outputfile
+	execute '!' . l:curl_cmd
+	redraw!
+	" Open the output file and return the value of 'hasMore' key
+	let l:jsonStr = join(readfile(a:outputfile), "\n")
+	let l:jsonObj = json_decode(l:jsonStr)
+	if has_key(l:jsonObj, 'has_more')
+		return l:jsonObj['has_more']
+	endif
+endfunction
+
+function! GetVectorStoreIdsFromJson(jsonStr)
+	let l:jsonObj = json_decode(a:jsonStr)
+	let l:vectorStoreIds = []
+	if has_key(l:jsonObj, 'data')
+		for item in l:jsonObj['data']
+			if has_key(item, 'id')
+				call add(l:vectorStoreIds, item['id'])
+			endif
+		endfor
+	endif
+	return l:vectorStoreIds
+endfunction
+
+function! ExtractVectorStoreIdsFromJsonFile(jsonFile)
+	let l:jsonStr = join(readfile(a:jsonFile), "\n")
+	return GetVectorStoreIdsFromJson(l:jsonStr)
+endfunction
+
+
+function! DeleteAllVectorStores()
+	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_list_vector_stores_output.json'
+	let l:has_more = 1
+	while l:has_more
+		call ListVectorStores(l:outputfile)
+		" if the output file doesn't exist, or is empty, return
+		if !filereadable(l:outputfile) || getfsize(l:outputfile) == 0
+			echo 'No OPENAI vector stores found'
+			return
+		endif
+
+		let l:vectorStoreIds = ExtractVectorStoreIdsFromJsonFile(l:outputfile)
+		for vectorStoreId in l:vectorStoreIds
+			call DeleteVectorStore(vectorStoreId)
+		endfor
+		let l:has_more = ListVectorStores(l:outputfile)
+	endwhile
+endfunction
+
 function! VectorCreateJsonPayload(name, expirationDays)
 	function! s:CreateExpiresAfter(anchor, days)
 		return '{"anchor": "' . a:anchor . '", "days": ' . a:days . '}'
@@ -830,36 +873,32 @@ endfunction
 
 " End Vector Store File Functions
 
+
+
 " Uploads files and returns the file IDs.
-" If a filename is provided, it returns the file ID for that specific file. Otherwise, it returns all file IDs.
 " Parameters:
 " directoryPath: Path to the directory containing the files to upload
-" returnFileIdByFilename: Filename to match and return the file ID
-" Returns:
-" List of file IDs
-function! UploadFiles(directoryPath, returnFileIdByFilename)
-    " If directoryPath is not a directory, return
+function! UploadFiles(directoryPath)
+    " Check if directoryPath is not a directory, return an empty list
     if !isdirectory(a:directoryPath)
         echo 'Directory does not exist: ' . a:directoryPath
-        return
+        return []
     endif
 
     let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-    " Define a list to store file IDs
     let l:file_ids = []
-    let l:matched_file_id = ''
+    let l:json_responses = []  " This will now hold JSON strings, not objects
 
     " Loop through all the files in the directory
     for file in split(glob(a:directoryPath . '/*'), '\n')
         " Skip if item is an empty string (happens when glob finds nothing)
-        if empty(file)
+        if empty(file) || isdirectory(file)
             continue
         endif
-        " Check if item is a directory
+
+        " Recursively process directories
         if isdirectory(file)
-            " Recursively list and upload files in this directory
-            let l:child_file_ids = UploadFiles(file, a:returnFileIdByFilename)
-            " Merge child directory file IDs into the main list
+            let l:child_file_ids = UploadFiles(file)
             call extend(l:file_ids, l:child_file_ids)
         elseif filereadable(file)
             " Upload the file
@@ -867,29 +906,27 @@ function! UploadFiles(directoryPath, returnFileIdByFilename)
             let l:curl_cmd = l:cmd . ' -o ' . l:outputfile
             execute 'silent ! ' . l:curl_cmd
 
-            " Immediately read and process the file upload response
+            " Read the output and store as a JSON string
             let output = join(readfile(l:outputfile), "\n")
-            let json_response = json_decode(output)
-
-            " Extract the 'id' from the JSON response
-            if has_key(json_response, 'id')
-                let file_id = json_response['id']
-                call add(l:file_ids, file_id)
-                " Check if the filename matches the provided parameter
-                if !empty(a:returnFileIdByFilename) && file =~ a:returnFileIdByFilename
-                    let l:matched_file_id = file_id
-                endif
-            endif
+            call add(l:json_responses, output)
         endif
     endfor
 
     redraw!
 
-    " Return either the matched file ID or all file IDs
-    if !empty(l:matched_file_id)
-        return [l:matched_file_id]
-    else
-        return l:file_ids
+    " Use ExtractKeys to parse JSON responses and extract required keys
+    if !empty(l:json_responses)
+        let l:keys = ['id', 'filename']
+        let l:key_values = ExtractKeys(l:json_responses, l:keys)
+
+        " Process extracted keys here (e.g., mapping, further processing)
+        " Assuming MapValues and CreateJsonWithEmptyValues are defined elsewhere
+        let l:fileIdMap = MapValues(l:key_values, 'filename', 'id')
+        let l:fileThreadMapping = CreateJsonWithEmptyValues(l:fileIdMap)
+        call writefile(split(l:fileThreadMapping, '\n'), g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json', 'b')
+
+		" write the file ids to a file 
+		call WriteJSONToFile(l:json_responses, g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json')
     endif
 endfunction
 
@@ -991,12 +1028,23 @@ endfunction
 	":echo CreateAssistantRequestJSONPayload("test assistant","a simple model for testing","You perform actions
 " on numbers")
 function! CreateAssistantRequestJSONPayload(assistantName, assistantDescription, assistantInstructions)
-    let l:tools = [{"type":"code_interpreter"},{"type":"file_search"}]
-    let l:stringfyTools = CreateJSONPayload(l:tools)
 
-    let l:payload = "{" .  "\"model\": " . '"' . g:OPENAI_ASSISTANT_MODEL . '",' . "\"name\": " . '"' . a:assistantName . '",' .  "\"description\": " . '"' . a:assistantDescription . '",' . "\"instructions\": " . '"' . a:assistantInstructions . '",' . "\"tools\": "  . l:stringfyTools .  "}"
+	let l:payload = {
+		\ 'model': g:OPENAI_ASSISTANT_MODEL,
+		\ 'name': a:assistantName,
+		\ 'description': a:assistantDescription,
+		\ 'instructions': a:assistantInstructions,
+		\ 'tools': [
+		\   {
+		\     "type": "code_interpreter"
+		\   },
+		\   {
+		\     "type": "file_search"
+		\   }
+		\   ]
+		\}
 
-    return l:payload
+    return json_encode(l:payload)
 endfunction
 
 
@@ -1172,60 +1220,121 @@ endfunction
 " groupFilesByNamespaceJsonFile: [Optional] Path to the file containing the JSON response creating cs project assistant. This file contains group files by namespace output.
 " Returns: List of file ids for the given classname
 " Sample call: echo GetUploadedFileIdByClassname('JITDecisionController','')
+" function! GetUploadedFileIdByClassname(classname, groupFilesByNamespaceJsonFile)
+"     "if jsonFilePath is empty, set it to 'openai_upload_assistant_files_output.json'
+"     if empty(a:groupFilesByNamespaceJsonFile)
+"         let l:filesByNamespaceJsonFile = g:OPENAI_OUTPUT_DIR . '/openai_group_files_by_namespace_output.json'
+"     else
+"         let l:filesByNamespaceJsonFile = a:groupFilesByNamespaceJsonFile
+"     endif
+"     "Get matching namespaces for the given classname
+"     let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
+"     function! s:GetAllUploadedFileIds(jsonFilePath)
+"         " Read and decode the JSON file
+"         let jsonContent = json_decode(join(readfile(a:jsonFilePath), ''))
+"
+"         " Initialize an empty list for matching IDs
+"         let matchingIds = []
+"
+"         " Iterate over each object in the JSON array and add the 'id' to the list of matching IDs
+"         for jsonObject in jsonContent
+"             " Check if the 'id' is present and add it to the list of matching IDs
+"             if has_key(jsonObject, 'id')
+"                 echo "Adding id: " . jsonObject['id'] . " for file: " . jsonObject['filename'] . " to the list"
+"                 call add(matchingIds, jsonObject['id'])
+"             endif
+"         endfor
+"
+"         return matchingIds
+"     endfunction
+"
+"     let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+"     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
+"
+"     "if no namespaces found, return
+"     if len(l:namespaces) == 0
+"         echo 'No namespaces found for classname: ' . a:classname
+"         echo 'Using all available files'
+"         let l:uploadedJsonFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+"         let l:uploadedFileIds = s:GetAllUploadedFileIds(l:uploadedJsonFiles)
+"         echo 'A total of ' . len(l:uploadedFileIds) . ' files found in the project assistant'
+"
+"         " If the number of files is greater than 10, merge them into a single file
+"         if len(l:uploadedFileIds) > 10
+"             echo 'Thread files are greater than 10. Using merged file instead...'
+"             " get the namespace from the merged file by taking the filename from the path
+"             let l:namespace = fnamemodify(l:mergedFile, ':t')
+"             echo 'Using namespace: ' . l:namespace
+"             return GetUploadedFileIdByNamespace([l:namespace], l:uploadedFiles)
+"         endif
+"         return l:uploadedFileIds
+"     endif
+"     "Get file ids for the given namespaces
+"     let l:fileIds = GetUploadedFileIdByNamespace(l:namespaces, l:uploadedFiles )
+"     return l:fileIds
+" endfunction
+
 function! GetUploadedFileIdByClassname(classname, groupFilesByNamespaceJsonFile)
-	"if jsonFilePath is empty, set it to 'openai_upload_assistant_files_output.json'
-	if empty(a:groupFilesByNamespaceJsonFile)
-		let l:filesByNamespaceJsonFile = g:OPENAI_OUTPUT_DIR . '/openai_group_files_by_namespace_output.json'
-	else
-		let l:filesByNamespaceJsonFile = a:groupFilesByNamespaceJsonFile
-	endif
-	"Get matching namespaces for the given classname
-	let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
-    function! s:GetAllUploadedFileIds(jsonFilePath)
-        " Read and decode the JSON file
-        let jsonContent = json_decode(join(readfile(a:jsonFilePath), ''))
-        
-        " Initialize an empty list for matching IDs
-        let matchingIds = []
+	let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
+	" read the content of the uploaded files json and decode it to an array of strings
+	let l:uploadedFilesContent = join(readfile(l:uploadedFiles), "\n")
+	let l:uploadedFiles = json_decode(l:uploadedFilesContent)
+	return l:uploadedFiles
 
-        " Iterate over each object in the JSON array and add the 'id' to the list of matching IDs
-        for jsonObject in jsonContent
-            " Check if the 'id' is present and add it to the list of matching IDs
-            if has_key(jsonObject, 'id')
-                echo "Adding id: " . jsonObject['id'] . " for file: " . jsonObject['filename'] . " to the list"
-                call add(matchingIds, jsonObject['id'])
-            endif
-        endfor
 
-        return matchingIds
-    endfunction
 
-	let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-    let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
-
-	"if no namespaces found, return
-	if len(l:namespaces) == 0
-		echo 'No namespaces found for classname: ' . a:classname
-        echo 'Using all available files'
-		let l:uploadedJsonFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-        let l:uploadedFileIds = s:GetAllUploadedFileIds(l:uploadedJsonFiles)
-        echo 'A total of ' . len(l:uploadedFileIds) . ' files found in the project assistant'
-
-        " If the number of files is greater than 10, merge them into a single file
-        if len(l:uploadedFileIds) > 10
-            echo 'Thread files are greater than 10. Using merged file instead...'
-            " get the namespace from the merged file by taking the filename from the path
-            let l:namespace = fnamemodify(l:mergedFile, ':t')
-            echo 'Using namespace: ' . l:namespace
-            return GetUploadedFileIdByNamespace([l:namespace], l:uploadedFiles)
-        endif
-		return l:uploadedFileIds
-	endif
-	"Get file ids for the given namespaces
-	let l:fileIds = GetUploadedFileIdByNamespace(l:namespaces, l:uploadedFiles )
-	return l:fileIds
+	" "if jsonFilePath is empty, set it to 'openai_upload_assistant_files_output.json'
+	" if empty(a:groupFilesByNamespaceJsonFile)
+	"     let l:filesByNamespaceJsonFile = g:OPENAI_OUTPUT_DIR . '/openai_group_files_by_namespace_output.json'
+	" else
+	"     let l:filesByNamespaceJsonFile = a:groupFilesByNamespaceJsonFile
+	" endif
+	" "Get matching namespaces for the given classname
+	" let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
+    " function! s:GetAllUploadedFileIds(jsonFilePath)
+    "     " Read and decode the JSON file
+    "     let jsonContent = json_decode(join(readfile(a:jsonFilePath), ''))
+    "
+    "     " Initialize an empty list for matching IDs
+    "     let matchingIds = []
+    "
+    "     " Iterate over each object in the JSON array and add the 'id' to the list of matching IDs
+    "     for jsonObject in jsonContent
+    "         " Check if the 'id' is present and add it to the list of matching IDs
+    "         if has_key(jsonObject, 'id')
+    "             echo "Adding id: " . jsonObject['id'] . " for file: " . jsonObject['filename'] . " to the list"
+    "             call add(matchingIds, jsonObject['id'])
+    "         endif
+    "     endfor
+    "
+    "     return matchingIds
+    " endfunction
+    "
+	" let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+    " let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
+    "
+	" "if no namespaces found, return
+	" if len(l:namespaces) == 0
+	"     echo 'No namespaces found for classname: ' . a:classname
+    "     echo 'Using all available files'
+	"     let l:uploadedJsonFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+    "     let l:uploadedFileIds = s:GetAllUploadedFileIds(l:uploadedJsonFiles)
+    "     echo 'A total of ' . len(l:uploadedFileIds) . ' files found in the project assistant'
+    "
+    "     " If the number of files is greater than 10, merge them into a single file
+    "     if len(l:uploadedFileIds) > 10
+    "         echo 'Thread files are greater than 10. Using merged file instead...'
+    "         " get the namespace from the merged file by taking the filename from the path
+    "         let l:namespace = fnamemodify(l:mergedFile, ':t')
+    "         echo 'Using namespace: ' . l:namespace
+    "         return GetUploadedFileIdByNamespace([l:namespace], l:uploadedFiles)
+    "     endif
+	"     return l:uploadedFileIds
+	" endif
+	" "Get file ids for the given namespaces
+	" let l:fileIds = GetUploadedFileIdByNamespace(l:namespaces, l:uploadedFiles )
+	" return l:fileIds
 endfunction
-
 " Function to create a thread message for a given class and assign corresponding file ids from uploaded namespace files.
 " It creates a new thread or uses an existing thread if one exists for the given class.
 " Parameters:
@@ -1316,13 +1425,19 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 
 	" Create a thread for each namespace
 	for namespace in l:classNamespaces
+		echomsg 'Creating thread for namespace: ' . namespace
 		" Get a thread id for the given namespace
 		"echo 'Creating thread for namespace: ' . namespace
 		let l:threadId = GetThreadIdByNamespace(namespace, '')
-		let l:threadMessageRequest = ThreadMessageJsonPayload(l:threadId, l:message, l:uploadedFileIds)
+		echomsg 'threadId: ' . l:threadId
+
+		" Create a thread message payload
+		let l:threadMessageRequest = ThreadMessageJsonPayload(l:threadId, l:message)
+
+		echomsg 'threadMessageRequest: ' . l:threadMessageRequest
 		let l:messageFilename = fnamemodify(namespace, ':t:r') . '.' . l:threadMessagePayloadFilename
 		let l:threadMessageOutputFile = s:ReplaceDotsInFilename(l:messageFilename, '_')
-		"echo 'threadMessageOutputFile: ' . l:threadMessageOutputFile
+		echomsg 'threadMessageOutputFile: ' . l:threadMessageOutputFile
 		call CreateThreadMessage(l:threadMessageRequest, l:threadMessageOutputFile)
 	endfor
 endfunction
@@ -1404,6 +1519,14 @@ endfunction
 " Sample call: :OpenAIExecuteThreadMessage requests/namespace_file_thread_message.json
 command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>)
 
+function! GetThreadRunAdditionalPayload(assistantId)
+	let l:additionalPayload = {
+		\ "assistant_id": a:assistantId,
+		\ "additional_instructions": "When asked to perform a code review, rewrite, or generate a piece of code, the assistant shall generate request code and return file_ids to download all generated code files."
+		\ }
+	return l:additionalPayload
+endfunction
+
 function! ExecuteThreadMessage(messageJson)
 	let l:outputfile = g:OPENAI_RESPONSES_DIR . '/openai_thread_message_output.json'
 	" load project assistant output file to retrieve the assistant id
@@ -1413,12 +1536,15 @@ function! ExecuteThreadMessage(messageJson)
 
 	" load messageJson file to retrieve the thread id
 	let l:threadId = json_decode(join(readfile(a:messageJson), "\n"))['thread_id']
+	echomsg 'Thread ID: ' . l:threadId . ' assistant ID: ' . l:projectAssistantId
 
 	" create a json payload with the thread id
-	let l:threadRunPayload = {"assistant_id": l:projectAssistantId, "additional_instructions": "When asked to perform a code review, rewrite, or generate a piece of code, the assistant shall generate request code and return file_ids to download all generated code files. "}
+	let l:threadRunPayload = GetThreadRunAdditionalPayload(l:projectAssistantId)
+
 	let l:threadRunJson = CreateJSONPayload(l:threadRunPayload)
 	" stringfy the json payload
     let l:encodedThreadRunJson = json_encode(l:threadRunJson)
+	echomsg 'Thread Run JSON: ' . l:encodedThreadRunJson
 
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
@@ -1427,8 +1553,8 @@ function! ExecuteThreadMessage(messageJson)
 
     " Get execution status
 	echo 'Getting thread run status...'
-    let l:threadRunStatus = GetThreadRunStatus(l:outputfile)
-    echo 'Thread run status: ' . l:threadRunStatus
+	let l:threadRunStatus = GetThreadRunStatus(l:outputfile)
+	echo 'Thread run status: ' . l:threadRunStatus
 
 endfunction
 
@@ -1583,11 +1709,11 @@ function! SetupProjectAssistant(projectPath, directoryToPreserve)
     "
 	" echo "2. Starting....Grouping files by namespace"
 	" call GroupFilesByNamespace(g:OPENAI_SOURCE_DIR, l:mergedFile)
-	" let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
+	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
     "
 	" echo "3. Starting....Created project assistant: " . l:assistantName
 
-	let l:assistantResponse = CreateOpenAICsProjectAssistant(g:OPENAI_SOURCE_DIR, l:assistantName)
+	let l:assistantResponse = CreateOpenAICsProjectAssistant(a:projectPath, l:assistantName)
 
     function! s:CreateSampleJsonMessageRequest(dir)
         let l:sampleclassname = ''
