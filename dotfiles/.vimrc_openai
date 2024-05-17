@@ -29,6 +29,7 @@
 " When a new message is created, the same thread will be used only if the classes are in the same namespace. Otherwise a new thread is
 " created for the new namespace.
 "
+
 set encoding=utf-8
 let g:OPENAI_WORKING_DIR = '~/Documents/AI_ProjectAssistant/'
 
@@ -54,11 +55,15 @@ let g:OPENAI_DELETE_ASSISTANT_CMD = 'curl -sS -X DELETE  https://api.openai.com/
 let g:OPENAI_ASSISTANT_THREAD_CMD = 'curl https://api.openai.com/v1/threads -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d ""  '
 let g:OPENAI_DELETE_ASSISTANT_THREAD_CMD = 'curl -X DELETE  https://api.openai.com/v1/threads/{thread_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+let g:OPENAI_ASSISTANT_RETRIEVE_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages/{message_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2"'
+
+
 let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl "https://api.openai.com/v1/threads/{thread_id}/messages?limit=1" -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 " let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-1106-preview'
-let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-turbo-2024-04-09'
+" let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-turbo-2024-04-09'
+let g:OPENAI_ASSISTANT_MODEL = 'gpt-4o'
 let g:OPENAI_ASSISTANT_TEMPERATURE = 0.5
 
 
@@ -261,18 +266,61 @@ function! CreateThreadMessage(messageRequest, outputfile)
     execute 'edit ' . l:generatedOutputFile
 endfunction
 
+" function! OpenAIAssistantThreadListMessages(threadId, outputfile)
+"     let l:cmd = g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD
+"     let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
+"
+"     if executable('jq')
+"         let l:curl_cmd = l:response . ' | jq .' . ' > ' . a:outputfile
+"     else
+"         let l:curl_cmd = l:response . ' -o ' . a:outputfile
+"     endif
+"
+"     execute '!' . l:curl_cmd
+"     execute 'edit ' . a:outputfile
+" endfunction
+
+
 function! OpenAIAssistantThreadListMessages(threadId, outputfile)
-	let l:cmd = g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD
-	let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
+    let l:cmd = g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD
+    let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
 
-	if executable('jq')
-		let l:curl_cmd = l:response . ' | jq .' . ' > ' . a:outputfile
-	else
-		let l:curl_cmd = l:response . ' -o ' . a:outputfile
-	endif
+    " Determine the curl command based on the availability of jq
+    if executable('jq')
+        let l:curl_cmd = l:response . ' | jq .' . ' > ' . shellescape(a:outputfile)
+    else
+        let l:curl_cmd = l:response . ' -o ' . shellescape(a:outputfile)
+    endif
 
-	execute '!' . l:curl_cmd
-	execute 'edit ' . a:outputfile
+    " Run the curl command asynchronously and silently
+    call job_start(l:curl_cmd, {'out_io': 'null', 'err_io': 'null', 'exit_cb': 'HandleListMessagesExit'})
+
+    " Optionally, prepare to open the output file non-intrusively
+    let w:open_file_post_job = a:outputfile
+endfunction
+
+function! HandleListMessagesExit(job_id, status, data, event)
+    " Check the exit status
+    if a:status == 0
+        " Check if the output file has been written to
+        if filereadable(a:data.outputfile)
+            let file_size = getfsize(a:data.outputfile)
+            if file_size > 0
+                execute 'silent! pedit ' . a:data.outputfile
+                echom 'Output file updated successfully. Size: ' . file_size . ' bytes'
+            else
+                echoerr 'Output file is empty.'
+            endif
+        else
+            echoerr 'Output file does not exist or is not accessible.'
+        endif
+    else
+        echoerr 'Curl command failed with status: ' . a:status
+        " Log any available output for diagnostic purposes
+        if !empty(a:data.output)
+            echom 'Curl output: ' . a:data.output
+        endif
+    endif
 endfunction
 
 function! s:CheckJsonTool()
@@ -522,14 +570,14 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 	endfor
 	" redraw!
 
+    let l:assistantOutput = g:OPENAI_OUTPUT_DIR . '/openai_create_project_assistant_output.json'
 	let l:vectorStorePayload = GetVectorStoreToolResources(l:vectorStoreId, l:uploadedFileIds)
 	echomsg 'Vector store payload: ' . l:vectorStorePayload
 
 
-	let l:vectorStoreOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_assign_vector_store_to_assistant_output.json'
 	let l:vectorStoreAssignCmd = g:OPENAI_ASSIGN_VECTOR_STORE_TO_ASSISTANT_CMD
 	let l:vectorStoreAssignResponse = substitute(l:vectorStoreAssignCmd, '{assistant_id}', l:assistantId, '')
-	let l:vectorStoreAssignCurlCmd = l:vectorStoreAssignResponse . shellescape(l:vectorStorePayload) . ' -o ' . l:vectorStoreOutputFile
+	let l:vectorStoreAssignCurlCmd = l:vectorStoreAssignResponse . shellescape(l:vectorStorePayload) . ' -o ' . l:assistantOutput
 
 	" echomsg 'Vector store assign cmd: ' . l:vectorStoreAssignCurlCmd
 	execute '!' . l:vectorStoreAssignCurlCmd
@@ -655,31 +703,25 @@ function! DeleteCsProjectUploadedAssistantFiles(filepath)
     let l:inputfile = a:filepath
     " if filepath is empty, set it to the default
     if empty(a:filepath)
-        let l:inputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
+        let l:inputfile = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
     endif
 
     " Read the file into a list of lines
     let lines = readfile(l:inputfile)
 
     " Join the lines into a single string and decode JSON
-    let jsonObjects = json_decode(join(lines, ''))
+    let fileIds = json_decode(join(lines, ''))
 
     " Check if the decoded data is a list
-    if type(jsonObjects) != type([])
+    if type(fileIds) != type([])
         echoerr 'Invalid JSON: Expected a JSON array'
         return
     endif
 
     " Iterate over each object in the JSON array
-    for jsonObject in jsonObjects
-        " Check if jsonObject is a dictionary
-        if type(jsonObject) == type({})
-            " Check if jsonObject has an 'id' key
-            if has_key(jsonObject, 'id')
-				echo 'Deleting file with id: ' . jsonObject['id']
-				call DeleteOpenAIAssistantFile(jsonObject['id'])
-            endif
-        endif
+    for fileId in fileIds
+		echo 'Deleting file with id: ' . fileId
+		call DeleteOpenAIAssistantFile(fileId)
     endfor
 endfunction
 
@@ -1046,9 +1088,6 @@ function! CreateAssistantRequestJSONPayload(assistantName, assistantDescription,
 
     return json_encode(l:payload)
 endfunction
-
-
-
 
 function! CreateJSONPayload(dictParam)
     return s:JSONStringify(a:dictParam)
@@ -1517,71 +1556,238 @@ endfunction
 " returns:
 " A json response inside the 'responses' directory. The file contains a collection of thread messages on the thread.
 " Sample call: :OpenAIExecuteThreadMessage requests/namespace_file_thread_message.json
-command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>)
+" command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>,"")
+command! -nargs=1 OpenAIExecuteThreadMessage call ExecuteThreadMessage(<f-args>,"thread.message.completed")
+
+
+function! AssertNoCarriageReturns(payload)
+    " Convert the dictionary to a JSON string
+    let l:jsonString = json_encode(a:payload)
+
+    " Remove any ^M characters
+    let l:cleanedJsonString = substitute(l:jsonString, '\r', '', 'g')
+
+    " Check if the lengths are the same
+    if len(l:jsonString) != len(l:cleanedJsonString)
+        throw 'Payload contains ^M characters'
+    else
+        echom 'Payload does not contain ^M characters'
+    endif
+endfunction
+
 
 
 function! GetThreadRunAdditionalPayload(assistantId)
     let l:additionalPayload = {
         \ "assistant_id": a:assistantId,
+        \ "stream": v:true,
         \ "additional_messages": [
-		\ {
+        \ {
             \ "role": "user",
             \ "content": "For each thread message with generated code, provide a file_path to the generated code file."
         \ }
-		\ ]
+        \ ]
     \}
     return l:additionalPayload
 endfunction
 
-function! ExecuteThreadMessage(messageJson)
-	let l:outputfile = g:OPENAI_RESPONSES_DIR . '/openai_thread_message_output.json'
-	" load project assistant output file to retrieve the assistant id
+
+" Function to execute a thread message and filter the response for a specific event name
+" Parameters:
+" messageJson: Path to the JSON file containing the thread message
+" eventName: Name of the event to filter the response for. If the event name is empty, all events are captured.
+" Returns:
+" Captures all generated events to a file in the 'responses' directory - namely 'openai_thread_event_messages_output.json'
+function! ExecuteThreadMessage(messageJson, eventName)
+	let l:outputfile = g:OPENAI_RESPONSES_DIR . '/openai_thread_event_messages_output.json'
+	" clear output file
+	call writefile([], l:outputfile)  " Ensure the output file is created
+
+	" Load project assistant and thread ID information
 	let l:projectAssistantOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_create_project_assistant_output.json'
 	let l:projectAssistantOutput = join(readfile(l:projectAssistantOutputFile), "\n")
 	let l:projectAssistantId = json_decode(l:projectAssistantOutput)['id']
-
-	" load messageJson file to retrieve the thread id
 	let l:threadId = json_decode(join(readfile(a:messageJson), "\n"))['thread_id']
-	echomsg 'Thread ID: ' . l:threadId . ' assistant ID: ' . l:projectAssistantId
 
-	" create a json payload with the thread id
+	" Generate and encode the JSON payload
 	let l:threadRunPayload = GetThreadRunAdditionalPayload(l:projectAssistantId)
+	let l:threadRunJson = json_encode(l:threadRunPayload)
 
-	let l:threadRunJson = CreateJSONPayload(l:threadRunPayload)
-	" stringfy the json payload
-    let l:encodedThreadRunJson = json_encode(l:threadRunJson)
-	echomsg 'Thread Run JSON: ' . l:encodedThreadRunJson
+	" Log the JSON payload
+	echom 'JSON Payload: ' . l:threadRunJson
 
-	let l:cmd = g:OPENAI_ASSISTANT_THREAD_RUN_CMD
-	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
-	let l:curl_cmd = l:response. l:encodedThreadRunJson . ' -o ' . l:outputfile
-    execute '!' . l:curl_cmd
+	" Assemble the curl command for streaming as a list of arguments
+	" Substitute the thread_id in the g:OPENAI_THREAD_RUN_CMD with the actual thread_id
+	let l:curl_cmd = substitute(g:OPENAI_ASSISTANT_THREAD_RUN_CMD, '{thread_id}', l:threadId, '')
 
-    " Get execution status
-	echo 'Getting thread run status...'
-	let l:threadRunStatus = GetThreadRunStatus(l:outputfile)
-	echo 'Thread run status: ' . l:threadRunStatus
+	" Escape the JSON payload for use in the shell command
+	let l:escapedJson = shellescape(l:threadRunJson)
+
+	" Add the thread run JSON payload to the curl command
+	let l:curl_cmd = l:curl_cmd . l:escapedJson
+
+	" Create a temporary file to store the filtered output
+	let l:tempfile = tempname()
+	call writefile([], l:tempfile)  " Ensure the temporary file is created
+
+	" Verify the temporary file creation
+	if !filereadable(l:tempfile)
+		echom 'Error: Temporary file creation failed'
+		return
+	endif
+
+	" Define the shell script content for filtering the streaming response
+	let l:shell_script = []
+	call add(l:shell_script, '#!/bin/bash')
+	call add(l:shell_script, l:curl_cmd . ' | while IFS= read -r line; do')
+	call add(l:shell_script, '  if [[ "$line" =~ "event: ' . a:eventName . '" ]]; then')
+	call add(l:shell_script, '    read -r line;')
+	call add(l:shell_script, '    if [[ "$line" =~ "data: " ]]; then')
+	call add(l:shell_script, '      response=${line#*data: }; echo $response >> ' . l:tempfile . ';')
+	call add(l:shell_script, '    fi;')
+	call add(l:shell_script, '  fi;')
+	call add(l:shell_script, 'done')
+
+	" Create a temporary script file
+	let l:shell_script_file = tempname()
+	call writefile(l:shell_script, l:shell_script_file)
+
+	" Make the script executable
+	call system('chmod +x ' . l:shell_script_file)
+
+	" Log the shell script to verify it
+	echom 'Executing shell script: ' . l:shell_script_file
+
+	" Execute the shell script asynchronously with streaming output
+	execute '!' . l:shell_script_file
+
+	" Check if the tempfile has content
+	if !filereadable(l:tempfile) || getfsize(l:tempfile) == 0
+		echom 'Error: No data written to temporary file'
+		redraw!
+		return
+	endif
+
+	" Move the filtered output to the final output file
+	execute 'silent !mv ' . l:tempfile . ' ' . l:outputfile
+
+	" Verify the output file creation
+	if filereadable(l:outputfile)
+		echom 'Curl command executed and output saved to: ' . l:outputfile
+	else
+		echom 'Error: Output file creation failed'
+	endif
+
+	" Clean up the temporary script file
+	call delete(l:shell_script_file)
+
+	" Extract thread message
+	let l:retrievedMessageOutputFile = g:OPENAI_RESPONSES_DIR . '/openai_thread_retrieved_message_output.json'
+	call PrintThredRunResponse(l:retrievedMessageOutputFile)
+    execute 'edit ' . l:retrievedMessageOutputFile
+endfunction
+
+
+" Function to process generated event messages from a thread run response and extract the message ID and thread ID
+" Parameters:
+" file: Path to the JSON file containing the thread event messages
+" Returns:
+" A dictionary containing a thread_id and message_id
+function! ExtractThreadAndMessageId(file)
+    " Read the entire file content
+    let l:content = join(readfile(a:file), "\n")
+
+    " Decode the JSON content
+    let l:data = json_decode(l:content)
+
+    " Extract thread_id and message_id
+    let l:thread_id = l:data.thread_id
+    let l:message_id = l:data.id
+
+    " Log the extracted IDs
+    echom 'thread_id: ' . l:thread_id
+    echom 'message_id: ' . l:message_id
+
+    " Return the extracted IDs as a dictionary
+    return {'thread_id': l:thread_id, 'message_id': l:message_id}
+endfunction
+
+function! PrintThredRunResponse(file)
+	let l:sourcefile = g:OPENAI_RESPONSES_DIR . '/openai_thread_event_messages_output.json'
+	let l:thread_message_ids = ExtractThreadAndMessageId(l:sourcefile)
+
+	" Retrieve the message by ID
+	"clear the output file
+	call writefile([], a:file)  " Ensure the output file is created
+
+	" Retrieve the message by ID
+	call RetrieveMessageById(l:thread_message_ids['thread_id'], l:thread_message_ids['message_id'], a:file)
+	redraw!
 
 endfunction
 
 
-function! GetThreadRunStatus(threadExecusionJson)
-	let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
-	let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
-	let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
-	let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+function! RetrieveMessageById(threadId, messageId, outputFile)
+	let l:curl_cmd = substitute(g:OPENAI_ASSISTANT_RETRIEVE_MESSAGE_CMD, '{message_id}', a:messageId, '')
+	let l:curl_cmd = substitute(l:curl_cmd, '{thread_id}', a:threadId, '')
+	let l:curl_cmd = l:curl_cmd . ' -o ' . a:outputFile
 
-	while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
-		" sleep 5
-		call timer_start(5000, {-> v:null})
-		call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
-		let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
-	endwhile
+	" Log the command to verify it
+	echom 'Executing curl command: ' . l:curl_cmd
 
-	call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR . '/' . l:threadId . '_execution_responses.json')
-	execute 'redraw!'
-	return l:threadRunStatus
+	" Execute the curl command asynchronously with streaming output
+	execute '!' . l:curl_cmd
 endfunction
+
+
+" Modify GetThreadRunStatus function to handle asynchronous status checking
+" function! GetThreadRunStatus(threadExecutionJson)
+"     let info = json_decode(join(readfile(a:threadExecutionJson), "\n"))
+"     echo 'Thread run status: ' . info['status']
+" endfunction
+
+function! GetThreadRunStatus(threadExecutionJson)
+    let l:threadRunStatus = json_decode(join(readfile(a:threadExecutionJson), "\n"))['status']
+    let l:threadId = json_decode(join(readfile(a:threadExecutionJson), "\n"))['thread_id']
+    let l:runId = json_decode(join(readfile(a:threadExecutionJson), "\n"))['id']
+    let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+
+    " Start the polling process
+    call s:PollThreadRunStatus(l:threadId, l:runId, l:tmp_out)
+endfunction
+
+function! s:PollThreadRunStatus(threadId, runId, outputFile)
+    call RetrieveOpenAIAssistantThreadRun(a:threadId, a:runId, a:outputFile)
+    let status = json_decode(join(readfile(a:outputFile), "\n"))['status']
+
+    if status ==# 'expired' || status ==# 'completed'
+        " When the desired status is reached, process the messages
+        call OpenAIAssistantThreadListMessages(a:threadId, g:OPENAI_RESPONSES_DIR . '/' . a:threadId . '_execution_responses.json')
+        execute 'redraw!'
+        echom 'Thread run status: ' . status
+    else
+        " Schedule the next check
+        call timer_start(5000, { -> s:PollThreadRunStatus(a:threadId, a:runId, a:outputFile) })
+    endif
+endfunction
+
+" function! GetThreadRunStatus(threadExecusionJson)
+"     let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
+"     let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
+"     let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
+"     let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
+"
+"     while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
+"         " sleep 5
+"         call timer_start(5000, {-> v:null})
+"         call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
+"         let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
+"     endwhile
+"
+"     call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR . '/' . l:threadId . '_execution_responses.json')
+"     execute 'redraw!'
+"     return l:threadRunStatus
+" endfunction
 
 function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, directoriesToPreserve)
 	let l:outputDir = fnamemodify(a:projectPath, ':t') .  '_project'
