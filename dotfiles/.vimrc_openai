@@ -504,10 +504,10 @@ endfunction
 " Assistant creation response
 function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
-	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt' }
+	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt', 'json':'' }
 
 	echo "0. Starting....Extracting source code files from directory: " . a:directoryPath
-	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs'])
+	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs','bin','obj','packages','node_modules'])
 
 	echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
@@ -1771,84 +1771,131 @@ function! s:PollThreadRunStatus(threadId, runId, outputFile)
     endif
 endfunction
 
-" function! GetThreadRunStatus(threadExecusionJson)
-"     let l:threadRunStatus = json_decode(join(readfile(a:threadExecusionJson), "\n"))['status']
-"     let l:threadId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['thread_id']
-"     let l:runId = json_decode(join(readfile(a:threadExecusionJson), "\n"))['id']
-"     let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
-"
-"     while l:threadRunStatus != 'expired' && l:threadRunStatus != 'completed'
-"         " sleep 5
-"         call timer_start(5000, {-> v:null})
-"         call RetrieveOpenAIAssistantThreadRun(l:threadId, l:runId, l:tmp_out)
-"         let l:threadRunStatus = json_decode(join(readfile(l:tmp_out), "\n"))['status']
-"     endwhile
-"
-"     call OpenAIAssistantThreadListMessages(l:threadId, g:OPENAI_RESPONSES_DIR . '/' . l:threadId . '_execution_responses.json')
-"     execute 'redraw!'
-"     return l:threadRunStatus
-" endfunction
 
+" Function: CreateProjectAssistantWorkingDir
+" 
+" Purpose:
+"     This function sets up a working directory structure for a project. It creates a main project directory and several
+"     subdirectories if they do not already exist, preserving specified directories within the project directory.
+" 
+" Parameters:
+"     projectPath (string): The path to the project's base directory.
+"     projectHomeDirectory (string): The desired home directory for the project. If this parameter is empty, the function 
+"                                    will create a default project directory based on the projectPath.
+"     directoriesToPreserve (list): A list of directory names that should be preserved within the project directory 
+"                                   when it is recreated.
+"
+" Details:
+"     1. Determine the Output Directory:
+"         - Constructs the output directory name by appending '_project' to the base name of projectPath.
+"         - Defines the default home directory using the global variable g:OPENAI_WORKING_DIR.
+" 
+"     2. Set or Create the Project Home Directory:
+"         - If projectHomeDirectory is empty:
+"             - Sets projectHomeDirectory to the constructed default project directory path.
+"             - Calls PreserveAndRecreate to handle the preservation of specified directories.
+"         - If projectHomeDirectory is not empty:
+"             - Checks if the directory exists. If not, creates it.
+"             - If the directory exists, calls PreserveAndRecreate to handle the preservation of specified directories.
+" 
+"     3. Create Required Subdirectories:
+"         - Defines subdirectories: requests, responses, output, and source.
+"         - Creates these subdirectories within the projectHomeDirectory if they do not already exist.
+" 
+"     4. Set Global Variables:
+"         - Calls ClearPersistentVariables to clear any existing global variables.
+"         - Sets global variables for the project home directory and its subdirectories using SetPersistentVariable.
+" 
+" Example Usage:
+"     call CreateProjectAssistantWorkingDir('/path/to/project', '', ['config', 'logs'])
+"         - This call sets up the project working directory structure at the default location derived from 
+"           '/path/to/project', preserving the 'config' and 'logs' directories.
+" 
+" Notes:
+"     - Ensure that the global variable g:OPENAI_WORKING_DIR is properly set before calling this function.
+"     - This function assumes that the PreserveAndRecreate, ClearPersistentVariables, and SetPersistentVariable functions 
+"       are defined elsewhere in the codebase.
+"
+" Key Functions Called:
+"     PreserveAndRecreate(directory, directoriesToPreserve): Preserves specified directories within the given directory and 
+"                                                            recreates the directory structure.
+"     ClearPersistentVariables(): Clears existing global variables related to the project.
+"     SetPersistentVariable(name, value): Sets a global variable with the specified name and value.
+"
 function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, directoriesToPreserve)
-	let l:outputDir = fnamemodify(a:projectPath, ':t') .  '_project'
-	let l:defaultHome = fnamemodify(g:OPENAI_WORKING_DIR, ':p')
-	let l:projectDir = l:defaultHome. l:outputDir
-	"if projectHomeDirectory is empty, set it to the project directory
-	if empty(a:projectHomeDirectory)
-		"call delete (l:projectDir, 'rf')
-		"let l:projectHomeDirectory = l:projectDir
-		"call mkdir(l:projectHomeDirectory, 'p')
+    let l:outputDir = fnamemodify(a:projectPath, ':t') .  '_project'
+    let l:defaultHome = fnamemodify(g:OPENAI_WORKING_DIR, ':p')
+    let l:projectDir = l:defaultHome . l:outputDir
+    "if projectHomeDirectory is empty, set it to the project directory
+    if empty(a:projectHomeDirectory)
         call PreserveAndRecreate(l:projectDir, a:directoriesToPreserve)
-		let l:projectHomeDirectory = l:projectDir
-	else
-		" if directory doesn't exist, create it
-		if !isdirectory(l:projectHomeDirectory)
-			call mkdir(l:projectHomeDirectory, 'p')
-		else
-			" if directory exists, delete it and create a new one
-			"call delete (l:projectHomeDirectory, 'rf')
-			"call mkdir(l:projectHomeDirectory, 'p')
+        let l:projectHomeDirectory = l:projectDir
+    else
+        " if directory doesn't exist, create it
+        if !isdirectory(l:projectHomeDirectory)
+            call mkdir(l:projectHomeDirectory, 'p')
+        else
             call PreserveAndRecreate(l:projectHomeDirectory, a:directoriesToPreserve)
-		endif
-	endif
+        endif
+    endif
 
-	" create required subdirectories
-	let l:requestsDir = l:projectHomeDirectory . '/requests'
-	let l:responsesDir = l:projectHomeDirectory . '/responses'
-	let l:outputDir = l:projectHomeDirectory . '/output'
-	let l:sourceDir = l:projectHomeDirectory . '/source'
+    " create required subdirectories
+    let l:requestsDir = l:projectHomeDirectory . '/requests'
+    let l:responsesDir = l:projectHomeDirectory . '/responses'
+    let l:outputDir = l:projectHomeDirectory . '/output'
+    let l:sourceDir = l:projectHomeDirectory . '/source'
 
     if !isdirectory(l:requestsDir)
         call mkdir(l:requestsDir, 'p')
     endif
-	call mkdir(l:responsesDir, 'p')
-	call mkdir(l:outputDir, 'p')
-	call mkdir(l:sourceDir, 'p')
+    call mkdir(l:responsesDir, 'p')
+    call mkdir(l:outputDir, 'p')
+    call mkdir(l:sourceDir, 'p')
 
-	" set global variables for the project home directory and requests and responses directories
-	call ClearPersistentVariables()
-	call SetPersistentVariable('OPENAI_PROJECT_HOME_DIR', l:projectHomeDirectory)
-	call SetPersistentVariable('OPENAI_REQUESTS_DIR', l:requestsDir)
-	call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
-	call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
-	call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
+    " set global variables for the project home directory and requests and responses directories
+    call ClearPersistentVariables()
+    call SetPersistentVariable('OPENAI_PROJECT_HOME_DIR', l:projectHomeDirectory)
+    call SetPersistentVariable('OPENAI_REQUESTS_DIR', l:requestsDir)
+    call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
+    call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
+    call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
 endfunction
 
 
-" function! SetPersistentVariable(varName, varValue)
-"     " Set the global variable
-"     let g:{a:varName} = a:varValue
+" Function: SetPersistentVariable
 "
-"     " Escape single quotes in varValue
-"     let escapedVarValue = substitute(a:varValue, "'", "''", "g")
+" Purpose:
+"     This function sets a global variable and persists its value by saving it to a file. It ensures that the variable
+"     retains its value across Vim sessions.
 "
-"     " Prepare the command to be saved
-"     let saveCmd = 'let g:' . a:varName . ' = ''' . escapedVarValue . ''''
+" Parameters:
+"     varName (string): The name of the variable to be set.
+"     varValue (string): The value to be assigned to the variable.
 "
-"     " Use Vim's execute and redirection to append to the file
-"     execute 'silent! echo "' . saveCmd . '" >> ' . expand('~/.vim_persistent_variables')
-" endfunction
-
+" Details:
+"     1. Set the Global Variable:
+"         - Assigns the given value to the global variable specified by varName.
+"
+"     2. Prepare the Command to be Saved:
+"         - Constructs a command string to set the global variable. This command will be saved to a file for persistence.
+"
+"     3. Read the Current Contents of the File:
+"         - Reads the current contents of the file that stores persistent variables, located at '~/.vim_persistent_variables'.
+"
+"     4. Add the New Command to the Contents:
+"         - Appends the new command string to the contents read from the file.
+"
+"     5. Write the Updated Contents Back to the File:
+"         - Writes the updated contents back to the file, ensuring the new variable setting is saved.
+"
+" Example Usage:
+"     call SetPersistentVariable('MY_VARIABLE', 'my_value')
+"         - This call sets the global variable 'MY_VARIABLE' to 'my_value' and persists this setting.
+"
+" Notes:
+"     - Ensure that the file '~/.vim_persistent_variables' exists and is writable.
+"     - This function assumes that the variable values do not contain single quotes, as they are used for string delimiters in the save command.
+"
 function! SetPersistentVariable(varName, varValue)
     " Set the global variable
     let g:{a:varName} = a:varValue
@@ -1872,6 +1919,44 @@ function! ClearPersistentVariables()
     call writefile([], expand('~/.vim_persistent_variables'))
 endfunction
 
+" Function: PreserveAndRecreate
+"
+" Purpose:
+"     This function preserves specified subdirectories within a given directory, deletes the directory, recreates it, and
+"     then restores the preserved subdirectories.
+"
+" Parameters:
+"     dir (string): The path to the directory to be recreated.
+"     preserveDirs (list): A list of subdirectory names to be preserved and restored within the directory.
+"
+" Details:
+"     1. Create a Temporary Directory:
+"         - Creates a temporary directory at $HOME/temp_preserve_dir for storing the preserved subdirectories.
+"
+"     2. Copy Contents of PreserveDirs to TempDir:
+"         - Iterates through the list of subdirectories specified in preserveDirs.
+"         - If a subdirectory exists within dir, it is copied to the temporary directory.
+"
+"     3. Delete Contents of Dir:
+"         - Deletes the entire contents of the directory specified by dir.
+"
+"     4. Recreate Directory and Restore Preserved Contents:
+"         - Recreates the directory specified by dir.
+"         - Copies the preserved subdirectories from the temporary directory back to the newly created directory.
+"
+"     5. Delete TempDir:
+"         - Deletes the temporary directory and its contents.
+"
+" Example Usage:
+"     call PreserveAndRecreate('/path/to/project', ['config', 'logs'])
+"         - This call preserves the 'config' and 'logs' subdirectories within '/path/to/project', deletes and recreates
+"           '/path/to/project', and then restores the 'config' and 'logs' subdirectories.
+"
+" Notes:
+"     - Ensure that the temporary directory ($HOME/temp_preserve_dir) does not conflict with any existing directory.
+"     - This function uses shell commands for copying and deleting directories. Ensure that the necessary permissions are
+"       in place and that the shell commands are available in the environment.
+"
 function! PreserveAndRecreate(dir, preserveDirs)
     let tempDir = $HOME . '/temp_preserve_dir' 
     call mkdir(tempDir, 'p')
@@ -1900,19 +1985,66 @@ function! PreserveAndRecreate(dir, preserveDirs)
     call delete(tempDir, 'rf')
 endfunction
 
+" Function: SetupProjectAssistant
+"
+" Purpose:
+"     This function sets up a project assistant environment by creating a working directory structure, generating a JSON
+"     file with project information, and creating a sample JSON message request file.
+"
+" Parameters:
+"     projectPath (string): The path to the project's base directory.
+"     directoryToPreserve (list): A list of subdirectory names to be preserved within the project directory when it is recreated.
+"
+" Details:
+"     1. Create a Working Directory for the Project:
+"         - Calls CreateProjectAssistantWorkingDir to set up the project working directory structure and preserve specified subdirectories.
+"
+"     2. Create a JSON File with Project Path Information:
+"         - Constructs a JSON object with the project path.
+"         - Encodes the JSON object to a string.
+"         - Writes the JSON string to an output file located at g:OPENAI_OUTPUT_DIR/openai_project_assistant_path_output.json.
+"
+"     3. Generate an Assistant Name and Create a Project Assistant:
+"         - Constructs an assistant name based on the project home directory.
+"         - Calls CreateOpenAICsProjectAssistant with the project path and assistant name.
+"
+"     4. Create a Sample JSON Message Request File:
+"         - Defines a local function s:CreateSampleJsonMessageRequest to create a sample JSON message request.
+"         - Writes the sample JSON message request to g:OPENAI_REQUESTS_DIR/generic_msg.json.
+"         - Echoes a message indicating the creation of the sample JSON message request.
+"
+"     5. Complete the Setup:
+"         - Echoes a completion message.
+"         - Refreshes the buffer.
+"         - Returns the project home directory.
+"
+" Example Usage:
+"     call SetupProjectAssistant('/path/to/project', ['config', 'logs'])
+"         - This call sets up the project assistant environment for the project located at '/path/to/project', preserving the
+"           'config' and 'logs' subdirectories.
+"
+" Notes:
+"     - Ensure that the global variables g:OPENAI_OUTPUT_DIR and g:OPENAI_REQUESTS_DIR are properly set before calling this function.
+"     - This function assumes that the CreateProjectAssistantWorkingDir and CreateOpenAICsProjectAssistant functions are defined elsewhere in the codebase.
+"
 function! SetupProjectAssistant(projectPath, directoryToPreserve)
-	" create a working directory for the project
-	call CreateProjectAssistantWorkingDir(a:projectPath, '', a:directoryToPreserve)
+    " create a working directory for the project
+    call CreateProjectAssistantWorkingDir(a:projectPath, '', a:directoryToPreserve)
+
     " create a json file with the project path and the source directory
     let l:projectAssistantJson = {"project_path": fnamemodify(a:projectPath, ':p')}
-    " stringfy the json payload
+    
+    " stringify the json payload
     let l:encodedProjectAssistantJson = json_encode(l:projectAssistantJson)
+    
     " write the json string to output file
     let l:projectAssistantOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_project_assistant_path_output.json'
     call writefile(split(l:encodedProjectAssistantJson, '\n'), l:projectAssistantOutputFile, 'b')
-	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
-	let l:assistantResponse = CreateOpenAICsProjectAssistant(a:projectPath, l:assistantName)
+    
+    let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
+    let l:assistantResponse = CreateOpenAICsProjectAssistant(a:projectPath, l:assistantName)
 
+    " local function to create a sample json message request
     function! s:CreateSampleJsonMessageRequest(dir)
         let l:sampleclassname = ''
         let l:samplemessage = 'Hello, I am a message'
@@ -1926,14 +2058,15 @@ function! SetupProjectAssistant(projectPath, directoryToPreserve)
         call writefile(split(l:sampleJsonMessageRequest, '\n'), l:sampleJsonMessagRequestFile, 'b')
     endfunction
 
-	" create a sample json message request
-	echo "4. Starting....Created sample json message request: " . g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json'
-	call s:CreateSampleJsonMessageRequest(g:OPENAI_REQUESTS_DIR)
+    " create a sample json message request
+    echo "4. Starting....Created sample json message request: " . g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json'
+    call s:CreateSampleJsonMessageRequest(g:OPENAI_REQUESTS_DIR)
 
-	echo "5. Done....Setup complete."
-	" Refresh the buffer
-	execute 'redraw!'
-	return g:OPENAI_PROJECT_HOME_DIR
+    echo "5. Done....Setup complete."
+    " Refresh the buffer
+    execute 'redraw!'
+    
+    return g:OPENAI_PROJECT_HOME_DIR
 endfunction
 
 " Function to merge files in a directory into a single file.
