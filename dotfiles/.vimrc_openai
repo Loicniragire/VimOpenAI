@@ -29,6 +29,11 @@
 " When a new message is created, the same thread will be used only if the classes are in the same namespace. Otherwise a new thread is
 " created for the new namespace.
 "
+" BASIC USAGE
+" 1. Navigate to the project directory and setup the project. Command: OpenAISetupProject <project_path>
+" 2. Create a thread message. Command: OpenAICreateMessage <message_file_name>. Navigate to Output Directory to view
+" message.
+" 3. To retrieve multiple messages from a thread, use the command: OpenAIListThreadMessages <thread_id> <limit>
 
 set encoding=utf-8
 let g:OPENAI_WORKING_DIR = '~/Documents/AI_ProjectAssistant/'
@@ -57,12 +62,9 @@ let g:OPENAI_DELETE_ASSISTANT_THREAD_CMD = 'curl -X DELETE  https://api.openai.c
 let g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 let g:OPENAI_ASSISTANT_RETRIEVE_MESSAGE_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/messages/{message_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2"'
 
-
-let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl "https://api.openai.com/v1/threads/{thread_id}/messages?limit=1" -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
+let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl "https://api.openai.com/v1/threads/{thread_id}/messages?limit={msg_limit}" -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
-" let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-1106-preview'
-" let g:OPENAI_ASSISTANT_MODEL = 'gpt-4-turbo-2024-04-09'
 let g:OPENAI_ASSISTANT_MODEL = 'gpt-4o'
 let g:OPENAI_ASSISTANT_TEMPERATURE = 0.5
 
@@ -262,66 +264,25 @@ function! CreateThreadMessage(messageRequest, outputfile)
 	let l:curl_cmd = l:response. l:jsonEncodedPayload . ' -o ' . l:generatedOutputFile
     "echo 'curl_cmd - CreateThreadMessage: ' . l:curl_cmd
 	execute '!' . l:curl_cmd
-    " Open the output file
-    execute 'edit ' . l:generatedOutputFile
+    return l:generatedOutputFile
 endfunction
 
-" function! OpenAIAssistantThreadListMessages(threadId, outputfile)
-"     let l:cmd = g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD
-"     let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
-"
-"     if executable('jq')
-"         let l:curl_cmd = l:response . ' | jq .' . ' > ' . a:outputfile
-"     else
-"         let l:curl_cmd = l:response . ' -o ' . a:outputfile
-"     endif
-"
-"     execute '!' . l:curl_cmd
-"     execute 'edit ' . a:outputfile
-" endfunction
+function! OpenAIAssistantThreadListMessages(threadId, limit, outputfile)
+	let l:cmd = g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD
+	let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
+	let l:response = substitute(l:response,'{msg_limit}', a:limit, '')
 
+	if executable('jq')
+		let l:curl_cmd = l:response . ' | jq .' . ' > ' . a:outputfile
+	else
+		let l:curl_cmd = l:response . ' -o ' . a:outputfile
+	endif
 
-function! OpenAIAssistantThreadListMessages(threadId, outputfile)
-    let l:cmd = g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD
-    let l:response = substitute(l:cmd,'{thread_id}',a:threadId,'')
-
-    " Determine the curl command based on the availability of jq
-    if executable('jq')
-        let l:curl_cmd = l:response . ' | jq .' . ' > ' . shellescape(a:outputfile)
-    else
-        let l:curl_cmd = l:response . ' -o ' . shellescape(a:outputfile)
-    endif
-
-    " Run the curl command asynchronously and silently
-    call job_start(l:curl_cmd, {'out_io': 'null', 'err_io': 'null', 'exit_cb': 'HandleListMessagesExit'})
-
-    " Optionally, prepare to open the output file non-intrusively
-    let w:open_file_post_job = a:outputfile
+	execute '!' . l:curl_cmd
+	execute 'edit ' . a:outputfile
 endfunction
 
-function! HandleListMessagesExit(job_id, status, data, event)
-    " Check the exit status
-    if a:status == 0
-        " Check if the output file has been written to
-        if filereadable(a:data.outputfile)
-            let file_size = getfsize(a:data.outputfile)
-            if file_size > 0
-                execute 'silent! pedit ' . a:data.outputfile
-                echom 'Output file updated successfully. Size: ' . file_size . ' bytes'
-            else
-                echoerr 'Output file is empty.'
-            endif
-        else
-            echoerr 'Output file does not exist or is not accessible.'
-        endif
-    else
-        echoerr 'Curl command failed with status: ' . a:status
-        " Log any available output for diagnostic purposes
-        if !empty(a:data.output)
-            echom 'Curl output: ' . a:data.output
-        endif
-    endif
-endfunction
+
 
 function! s:CheckJsonTool()
     " Run a test command with Python's json.tool and capture the output
@@ -357,38 +318,11 @@ command! -nargs=0 OpenAIListUploadedFiles call GetOpenAIUploadedFiles(g:OPENAI_O
 command! -nargs=0 OpenAIListAssistants call GetOpenAIAssistants(g:OPENAI_OUTPUT_DIR . '/openai_list_assistants_output.json')
 command! -nargs=1 OpenAIDeleteAssistant call DeleteOpenAIAssistant(<f-args>)
 
-"
-"command! -nargs=1 OpenAIDeleteAssistantThread call DeleteOpenAIAssistantThread(<f-args>)
 
-" arg1: json file containing threadId and message
-" Sample call:
-" :OpenAIAssistantThreadMessage openai_assistant_thread_message_request.json
-" file structure:
-" {
-"	"threadId": "thrd_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5",
-"	"message": "Hello, I am a message",
-"	"fileIds": ['file_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5', 'file_1GJ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5'] }
-"command! -nargs=1 OpenAIAssistantThreadMessage call CreateThreadMessage(<f-args>, 'openai_assistant_thread_message_output.json')
-
+" Command to list thread messages. The command takes the threadId and limit as arguments
 " arg1: threadId
-command! -nargs=1 OpenAIAssistantListThreadMessages call OpenAIAssistantThreadListMessages(<f-args>, g:OPENAI_OUTPUT_DIR . '/openai_assistant_thread_list_messages_output.json');
-
-" arg1: threadId
-" arg2: requestPayload
-" payload model:
-"      {
-"         "assistant_id": "[Required]",
-"         "model": "[Optional]",
-"         "instructions": "[Optional]",
-"         "tools": "[Optional]",
-"      }
-" To retrieve the response from thread run, run OpenAIAssistantListThreadMessages command
-" Note: Thread Run's status: "Completed" is expected prior to receiving the response. Use OpenAIAssistantRetrieveThreadRun command to retrieve the response.
-"command! -nargs=+ OpenAIAssistantThreadRun call CreateOpenAIAssistantThreadRun(<f-args>, 'openai_assistant_thread_run_output.json');
-
-" arg1: threadId
-" arg2: runId
-"command! -nargs=+ OpenAIAssistantRetrieveThreadRun call RetrieveOpenAIAssistantThreadRun(<f-args>, 'openai_assistant_retrieve_thread_run_output.json');
+" arg2: limit
+command! -nargs=+ OpenAIAssistantListThreadMessages call OpenAIAssistantThreadListMessages(<f-args>, g:OPENAI_OUTPUT_DIR . '/openai_assistant_thread_list_messages_output.json');
 
 " Define a function to list files with specified extensions in a directory
 " Parameters:
@@ -504,10 +438,10 @@ endfunction
 " Assistant creation response
 function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
-	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt', 'json':'' }
+	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt', 'json':'', 'ts':'','html':'', 'cshtml':'' }
 
 	echo "0. Starting....Extracting source code files from directory: " . a:directoryPath
-	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs','bin','obj','packages','node_modules'])
+	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs','bin','obj','packages','node_modules', 'cache','.vscode','.angular'])
 
 	echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
@@ -1463,6 +1397,7 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 	let l:classNamespaces = s:GetNamespacesByClassname(l:classname, '')
 
 	" Create a thread for each namespace
+	" TODO: Loop not needed here anymore. There can only be one namespace.
 	for namespace in l:classNamespaces
 		echomsg 'Creating thread for namespace: ' . namespace
 		" Get a thread id for the given namespace
@@ -1477,7 +1412,8 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 		let l:messageFilename = fnamemodify(namespace, ':t:r') . '.' . l:threadMessagePayloadFilename
 		let l:threadMessageOutputFile = s:ReplaceDotsInFilename(l:messageFilename, '_')
 		echomsg 'threadMessageOutputFile: ' . l:threadMessageOutputFile
-		call CreateThreadMessage(l:threadMessageRequest, l:threadMessageOutputFile)
+		let l:threadMessageFile = CreateThreadMessage(l:threadMessageRequest, l:threadMessageOutputFile)
+		call ExecuteThreadMessage(l:threadMessageFile, 'thread.message.completed')
 	endfor
 endfunction
 
@@ -1597,9 +1533,9 @@ endfunction
 " messageJson: Path to the JSON file containing the thread message
 " eventName: Name of the event to filter the response for. If the event name is empty, all events are captured.
 " Returns:
-" Captures all generated events to a file in the 'responses' directory - namely 'openai_thread_event_messages_output.json'
+" Captures all generated events to a file in the 'responses' directory - namely 'openai_thread_event_messages_output'
 function! ExecuteThreadMessage(messageJson, eventName)
-	let l:outputfile = g:OPENAI_RESPONSES_DIR . '/openai_thread_event_messages_output.json'
+	let l:outputfile = g:OPENAI_RESPONSES_DIR . '/openai_thread_event_messages_output'
 	" clear output file
 	call writefile([], l:outputfile)  " Ensure the output file is created
 
@@ -1682,50 +1618,154 @@ function! ExecuteThreadMessage(messageJson, eventName)
 	call delete(l:shell_script_file)
 
 	" Extract thread message
-	let l:retrievedMessageOutputFile = g:OPENAI_RESPONSES_DIR . '/openai_thread_retrieved_message_output.json'
-	call PrintThredRunResponse(l:retrievedMessageOutputFile)
+	let l:retrievedMessageOutputFile = g:OPENAI_RESPONSES_DIR . '/openai_thread_retrieved_message_output'
+	call PrintThreadRunResponse(l:retrievedMessageOutputFile)
     execute 'edit ' . l:retrievedMessageOutputFile
 endfunction
 
 
-" Function to process generated event messages from a thread run response and extract the message ID and thread ID
+" Function: ExtractThreadAndMessageIds
+"
+" Purpose:
+"     This function reads a JSON file containing multiple JSON data objects, extracts the thread ID and message ID from
+"     each object, logs the extracted IDs, and returns them as a list of dictionaries.
+"
 " Parameters:
-" file: Path to the JSON file containing the thread event messages
-" Returns:
-" A dictionary containing a thread_id and message_id
-function! ExtractThreadAndMessageId(file)
+"     file (string): The path to the JSON file from which the thread ID and message ID are to be extracted.
+"
+" Details:
+"     1. Read the Entire File Content:
+"         - Reads the contents of the file specified by the file parameter and joins them into a single string.
+"
+"     2. Split the Content by Newlines:
+"         - Splits the joined content by newlines to handle multiple JSON objects.
+"
+"     3. Decode Each JSON Object:
+"         - Decodes each JSON object from the split content into a dictionary.
+"
+"     4. Extract Thread ID and Message ID:
+"         - Extracts the thread_id and id fields from each decoded JSON object.
+"
+"     5. Log the Extracted IDs:
+"         - Logs the extracted thread_id and message_id using the echom command.
+"
+"     6. Return the Extracted IDs as a List of Dictionaries:
+"         - Returns a list of dictionaries containing the thread_id and message_id for each JSON object.
+"
+" Example Usage:
+"     let idsList = ExtractThreadAndMessageIds('/path/to/json/file')
+"     for ids in idsList
+"         echo 'Thread ID: ' . ids.thread_id
+"         echo 'Message ID: ' . ids.message_id
+"     endfor
+"
+" Notes:
+"     - Ensure that the file path is correct and the file contains valid JSON with thread_id and id fields.
+"
+function! ExtractThreadAndMessageIds(file)
     " Read the entire file content
     let l:content = join(readfile(a:file), "\n")
 
-    " Decode the JSON content
-    let l:data = json_decode(l:content)
+    " Split the content by newlines to handle multiple JSON objects
+    let l:jsonObjects = split(l:content, '\n')
 
-    " Extract thread_id and message_id
-    let l:thread_id = l:data.thread_id
-    let l:message_id = l:data.id
+    " Initialize a list to hold the extracted IDs
+    let l:idsList = []
 
-    " Log the extracted IDs
-    echom 'thread_id: ' . l:thread_id
-    echom 'message_id: ' . l:message_id
+    " Iterate over each JSON object
+    for jsonObject in l:jsonObjects
+        " Decode the JSON content
+        let l:data = json_decode(jsonObject)
 
-    " Return the extracted IDs as a dictionary
-    return {'thread_id': l:thread_id, 'message_id': l:message_id}
+        " Check if thread_id and id exist in the data
+        if has_key(l:data, 'thread_id') && has_key(l:data, 'id')
+            " Extract thread_id and message_id
+            let l:thread_id = l:data.thread_id
+            let l:message_id = l:data.id
+
+            " Log the extracted IDs
+            echom 'thread_id: ' . l:thread_id
+            echom 'message_id: ' . l:message_id
+
+            " Add the extracted IDs to the list
+            call add(l:idsList, {'thread_id': l:thread_id, 'message_id': l:message_id})
+        else
+            echom "Error: 'thread_id' or 'id' not found in JSON data"
+        endif
+    endfor
+
+    " Return the extracted IDs as a list of dictionaries
+    return l:idsList
 endfunction
 
-function! PrintThredRunResponse(file)
-	let l:sourcefile = g:OPENAI_RESPONSES_DIR . '/openai_thread_event_messages_output.json'
-	let l:thread_message_ids = ExtractThreadAndMessageId(l:sourcefile)
 
-	" Retrieve the message by ID
-	"clear the output file
-	call writefile([], a:file)  " Ensure the output file is created
+" Function: PrintThreadRunResponse
+"
+" Purpose:
+"     This function extracts thread and message IDs from a JSON file, retrieves messages by these IDs, formats the content,
+"     combines them, and writes the formatted messages to an output file.
+"
+" Parameters:
+"     file (string): The path to the output file where the formatted messages should be written.
+"
+" Details:
+"     1. Extract Thread and Message IDs:
+"         - Extracts thread and message IDs from the JSON file located at g:OPENAI_RESPONSES_DIR/openai_thread_event_messages_output
+"         - Calls ExtractThreadAndMessageIds to get a list of dictionaries containing thread_id and message_id.
+"
+"     2. Clear the Output File:
+"         - Clears the contents of the output file to ensure it is ready for new data.
+"
+"     3. Retrieve and Format Messages by ID:
+"         - Iterates over the list of extracted IDs.
+"         - Calls RetrieveMessageById for each thread_id and message_id, accumulating and formatting the retrieved messages.
+"         - Writes the formatted messages to the output file.
+"
+" Example Usage:
+"     call PrintThreadRunResponse('/path/to/output/file')
+"         - This call extracts thread and message IDs, retrieves the corresponding messages, formats and combines them,
+"           and writes them to the specified output file.
+"
+" Notes:
+"     - Ensure that the global variable g:OPENAI_RESPONSES_DIR is properly set before calling this function.
+"     - This function assumes that the ExtractThreadAndMessageIds and RetrieveMessageById functions are defined elsewhere in the codebase.
+"
+function! PrintThreadRunResponse(file)
+    let l:sourcefile = g:OPENAI_RESPONSES_DIR . '/openai_thread_event_messages_output'
+    let l:thread_message_ids = ExtractThreadAndMessageIds(l:sourcefile)
 
-	" Retrieve the message by ID
-	call RetrieveMessageById(l:thread_message_ids['thread_id'], l:thread_message_ids['message_id'], a:file)
-	redraw!
+    " Clear the output file
+    call writefile([], a:file)  " Ensure the output file is created
 
+    " Initialize a list to accumulate formatted messages
+    let l:formatted_messages = []
+
+    " Retrieve and format messages by ID
+    for ids in l:thread_message_ids
+        " Temporarily store message content in a variable
+        let l:message_tempfile = tempname()
+        call RetrieveMessageById(ids.thread_id, ids.message_id, l:message_tempfile)
+        let l:message_content = join(readfile(l:message_tempfile), "\n")
+        call delete(l:message_tempfile) " Clean up the temporary file
+
+        " Decode the message JSON content
+        let l:message_data = json_decode(l:message_content)
+
+        " Extract and format the content
+        if has_key(l:message_data, 'content') && !empty(l:message_data.content)
+            for content_item in l:message_data.content
+                if has_key(content_item, 'text') && has_key(content_item.text, 'value')
+                    call add(l:formatted_messages, content_item.text.value)
+                endif
+            endfor
+        endif
+    endfor
+
+    " Write the combined and formatted messages to the output file
+    call writefile(l:formatted_messages, a:file)
+
+    redraw!
 endfunction
-
 
 function! RetrieveMessageById(threadId, messageId, outputFile)
 	let l:curl_cmd = substitute(g:OPENAI_ASSISTANT_RETRIEVE_MESSAGE_CMD, '{message_id}', a:messageId, '')
@@ -1737,38 +1777,6 @@ function! RetrieveMessageById(threadId, messageId, outputFile)
 
 	" Execute the curl command asynchronously with streaming output
 	execute '!' . l:curl_cmd
-endfunction
-
-
-" Modify GetThreadRunStatus function to handle asynchronous status checking
-" function! GetThreadRunStatus(threadExecutionJson)
-"     let info = json_decode(join(readfile(a:threadExecutionJson), "\n"))
-"     echo 'Thread run status: ' . info['status']
-" endfunction
-
-function! GetThreadRunStatus(threadExecutionJson)
-    let l:threadRunStatus = json_decode(join(readfile(a:threadExecutionJson), "\n"))['status']
-    let l:threadId = json_decode(join(readfile(a:threadExecutionJson), "\n"))['thread_id']
-    let l:runId = json_decode(join(readfile(a:threadExecutionJson), "\n"))['id']
-    let l:tmp_out = g:OPENAI_RESPONSES_DIR . '/thread_run.json'
-
-    " Start the polling process
-    call s:PollThreadRunStatus(l:threadId, l:runId, l:tmp_out)
-endfunction
-
-function! s:PollThreadRunStatus(threadId, runId, outputFile)
-    call RetrieveOpenAIAssistantThreadRun(a:threadId, a:runId, a:outputFile)
-    let status = json_decode(join(readfile(a:outputFile), "\n"))['status']
-
-    if status ==# 'expired' || status ==# 'completed'
-        " When the desired status is reached, process the messages
-        call OpenAIAssistantThreadListMessages(a:threadId, g:OPENAI_RESPONSES_DIR . '/' . a:threadId . '_execution_responses.json')
-        execute 'redraw!'
-        echom 'Thread run status: ' . status
-    else
-        " Schedule the next check
-        call timer_start(5000, { -> s:PollThreadRunStatus(a:threadId, a:runId, a:outputFile) })
-    endif
 endfunction
 
 
