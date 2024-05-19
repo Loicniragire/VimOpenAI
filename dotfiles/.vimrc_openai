@@ -734,8 +734,16 @@ function! ExtractVectorStoreIdsFromJsonFile(jsonFile)
 endfunction
 
 
+command! -nargs=0 OpenAIDeleteAllVectorStores call DeleteAllVectorStores()
 function! DeleteAllVectorStores()
 	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_list_vector_stores_output.json'
+	" if the output file doesn't exist, or is empty, return
+	if !filereadable(l:outputfile) || getfsize(l:outputfile) == 0
+		call LogMessage('No OPENAI vector stores found')
+		echo 'No OPENAI vector stores found'
+		return
+	endif
+
 	let l:has_more = 1
 	while l:has_more
 		call ListVectorStores(l:outputfile)
