@@ -51,7 +51,9 @@ let g:OPENAI_ASSIGN_VECTOR_STORE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://ap
 let g:OPENAI_COMPLETION_CMD = 'curl -sS -X POST https://api.openai.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -d @'
 
 let g:OPENAI_ASSISTANTS_CMD = 'curl -X POST https://api.openai.com/v1/assistants -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
-let g:OPENAI_FILES_CMD = 'curl -sS -X POST https://api.openai.com/v1/files -H "Content-Type: multipart/form-data" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -F "purpose=assistants" -F "file=@"'
+
+let g:OPENAI_FILES_CMD = 'curl -sS -X POST https://api.openai.com/v1/files -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -F "purpose=assistants" -F "file=@"'
+
 let g:OPENAI_ASSIGN_FILE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants/{assistant_id}/files -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 let g:OPENAI_DELETE_FILE_CMD = 'curl -sS -X DELETE https://api.openai.com/v1/files/{file_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
 let g:OPENAI_RETRIEVE_FILE_CMD = 'curl https://api.openai.com/v1/files/{file_id}/content -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" '
@@ -401,7 +403,9 @@ function! GetUploadedFileIds(outputfile, maxFiles)
     let l:uploadedFileIds = []
     let l:filename = ''
 
-    " Check if there are more than 20 items, if so set a specific filename to filter on
+    " Check if there are more than 'maxFiles' items, if so set a specific filename to filter on
+	" i.e we will only upload the merged file since to limit the number of files uploaded to vector store
+	" Check the max capacity of the vector store to set this limit correctly.
     if len(json_strings) > a:maxFiles
         let l:filename = 'merged.txt'
     endif
@@ -436,10 +440,11 @@ endfunction
 " Assistant creation response
 function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
-	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt'}
+	let l:fileExtMapping = {'cs': '', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt'}
+	let l:ignoredFilesAndDirs = ['GlobalUsings.cs','bin','obj','packages','node_modules', 'cache','.vscode','.angular']
 
 	call LogMessage("0. Starting....Extracting source code files from directory: " . a:directoryPath)
-	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs','bin','obj','packages','node_modules', 'cache','.vscode','.angular'])
+	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ignoredFilesAndDirs )
 
 	call LogMessage("1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR)
     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
@@ -457,15 +462,23 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 	"Generate an assistant for the project
 	let l:assistantId = CreateProjectAssistant(a:projectName, 'A generic .NetCore project assistant', g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS)
 
+	"
 	" Create a vector store and upload project files
+	" Vector Store arguments the Assistant with knowledge from outside its model,
+	" such as proprietary information or documents provided by the user.
+	" Note that all these files have to be uploaded first.
+	" Each Vector Store can hold up to 10,000 files.
+	" The maximum file size is 512 MB
+	" Vector Stores support most file types - see: 
+	" https://platform.openai.com/docs/assistants/tools/file-search/supported-files
+	"
 	let l:vectorStoreName = a:projectName
 	let l:vectoreStoreExpirationDays = 1
 	let l:vectorStoreId = CreateVectorStore(l:vectorStoreName, l:vectoreStoreExpirationDays)
 	call UploadFiles(g:OPENAI_SOURCE_DIR)
 	let l:uploaded_file_ids_output = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
-	let l:uploadedFileIds = GetUploadedFileIds(l:uploaded_file_ids_output, 20)
+	let l:uploadedFileIds = GetUploadedFileIds(l:uploaded_file_ids_output, 10000)
 
-	" let l:uploadedFileIdsReq = json_encode(s:JSONStringify({"file_ids": l:uploadedFileIds}) )
 	let l:uploadedFileIdsReq = json_encode({"file_ids": l:uploadedFileIds}) 
 	call LogMessage('Uploaded file ids: ' . l:uploadedFileIdsReq)
 
@@ -623,7 +636,7 @@ endfunction
 
 " Command to delete all uploaded files regargedless of project.
 " Note that it does not delete the assistant itself.
-command! -nargs=0 OpenAIDeleteAllAssistantFiles call DeleteAllAssistantFiles()
+command! -nargs=0 OpenAIDeleteAllUploadedFiles call DeleteAllAssistantFiles()
 
 " Function to delete all files uploaded to OpenAI for a project. See OpenAIUploadAssistantFiles for uploading files.
 " Parameters:
@@ -826,20 +839,6 @@ function! DeleteVectorStore(vectorStoreId)
 	let l:cmd = g:OPENAI_DELETE_VECTOR_STORE_CMD
 	let l:curl_cmd = substitute(l:cmd,'{vector_store_id}',a:vectorStoreId,'')
 	execute '!' . l:curl_cmd
-endfunction
-
-
-function! UploadFilesToVectorStore(sourceDirectory, vectorStoreName, expirationDays)
-	let l:vectorStoreId = CreateVectorStore(a:vectorStoreName, a:expirationDays)
-	let l:uploadedFileIds = json_encode(s:JSONStringify({"file_ids": UploadFiles(a:sourceDirectory,'')}) )
-
-	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_files_to_vector_store_output.json'
-	let l:cmd = g:OPENAI_VECTOR_STORE_FILE_CMD
-	let l:response = substitute(l:cmd,'{vector_store_id}',l:vectorStoreId,'')
-	let l:curl_cmd = l:response . l:uploadedFileIds . ' -o ' . l:outputfile
-	execute 'silent !' . l:curl_cmd
-	redraw!
-	return l:vectorStoreId
 endfunction
 
 
@@ -2248,4 +2247,92 @@ function! LogMessage(msg)
 		let s:logfile = CreateLogFile()
 	endif
     call writefile([a:msg], s:logfile, 'a')
+endfunction
+
+
+"
+" Uploading a random file to Vector Store
+"
+function! GetActiveVectorStoreId(file)
+	let l:outputJson = join(readfile(a:file), "\n")
+	let l:outputJsonObject = json_decode(l:outputJson)
+	let l:activeVectorStoreId = l:outputJsonObject['id']
+	return l:activeVectorStoreId
+endfunction
+
+function! GetPathToVectorStoreOutputfile()
+	let l:outputFile = g:OPENAI_OUTPUT_DIR . '/openai_create_vector_store_output.json'
+	return l:outputFile
+endfunction
+
+" Function to upload files to the active Vector Store.
+" Parameters:
+" files: A list of file paths to upload to the Vector Store.
+" Returns:
+" None
+" Sample call: call UploadFilesToVectorStore(['/path/to/file1', '/path/to/file2'])
+function! UploadFilesToVectorStore(files)
+	let l:fileIds = []
+	let l:activeVectorStoreId = GetActiveVectorStoreId(GetPathToVectorStoreOutputfile())
+	for l:file in a:files
+		call LogMessage('Attempting to upload file: ' . l:file)
+        if filereadable(l:file)
+			let l:outputfile = tempname()
+            let l:cmd = g:OPENAI_FILES_CMD . shellescape(file, 1)
+            let l:curl_cmd = l:cmd . ' -o ' . l:outputfile
+			call LogMessage('Uploading file: ' . l:curl_cmd)
+            execute 'silent ! ' . l:curl_cmd
+
+            " Read the output and store as a JSON string
+            let output = join(readfile(l:outputfile), "\n")
+			" retrieve the file id
+			let l:outputJsonObject = json_decode(output)
+			let l:fileId = l:outputJsonObject['id']
+			call add(l:fileIds, l:fileId)
+			call delete(l:outputfile)
+		else
+			call LogMessage('File does not exist: ' . l:file)
+        endif
+	endfor
+
+	" if fileIds is empty, return
+	if empty(l:fileIds)
+		call LogMessage('No files uploaded to Vector Store')
+		return
+	endif
+
+	let l:fileIdsToUploadToVectorStore = json_encode({"file_ids": l:fileIds}) 
+	call LogMessage('File IDs to upload to Vector Store: ' . l:fileIdsToUploadToVectorStore)
+
+	let l:vectorStoreUploadOutputFile = g:OPENAI_OUTPUT_DIR . '/openai_vector_store_additional_files_output.json'
+	let l:cmd = g:OPENAI_VECTOR_STORE_FILE_CMD
+	let l:response = substitute(l:cmd,'{vector_store_id}',l:activeVectorStoreId,'')
+	let l:curl_cmd = l:response . shellescape(l:fileIdsToUploadToVectorStore) . ' -o ' . l:vectorStoreUploadOutputFile
+	call LogMessage('curl_cmd: ' . l:curl_cmd)
+	execute 'silent !' . l:curl_cmd
+
+	" Maximum number of attempts to check the 'completed' status
+	let l:max_attempts = 30
+
+	" Start polling the output file
+	for i in range(l:max_attempts)
+		" Wait for a bit before checking the status
+		call timer_start(5000, {-> v:null})
+
+		" Read and parse the JSON output
+		let l:json_output = json_decode(join(readfile(l:vectorStoreUploadOutputFile), "\n"))
+
+		" Check if the status is 'completed'
+		if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
+			call LogMessage("Vector store creation completed successfully. Id: " . l:json_output['id'])
+			break
+		elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
+			echoerr "Error in creating vector store: " . l:json_output['error_message']
+			break
+		endif
+
+		" Provide feedback on the status in the command line
+		call LogMessage("Checking completion status... (attempt " . (i+1) . ")")
+	endfor
+	redraw!
 endfunction
