@@ -35,6 +35,7 @@
 " message.
 " 3. To retrieve multiple messages from a thread, use the command: OpenAIListThreadMessages <thread_id> <limit>
 
+let s:logfile = ''
 set encoding=utf-8
 let g:OPENAI_WORKING_DIR = '~/Documents/AI_ProjectAssistant/'
 
@@ -181,7 +182,7 @@ endfunction
 function! DeleteOpenAIAssistantFile(fileId)
 	let l:cmd = g:OPENAI_DELETE_FILE_CMD
 	let l:curl_cmd = substitute(l:cmd,'{file_id}',a:fileId,'')
-	execute '!' . l:curl_cmd
+	execute 'silent !' . l:curl_cmd
 endfunction
 
 function! DeleteOpenAIAssistant(assistantId)
@@ -252,9 +253,6 @@ function! CreateThreadMessage(messageRequest, outputfile)
 	let l:requestPayload = MessageJsonPayload(l:messageContent)
     let l:jsonEncodedPayload = json_encode(l:requestPayload)
 
-	" Properly escape the JSON payload for shell command
-	"let l:escapedPayload = shellescape(l:requestPayload, 1)
-
 	"echo 'requestPayload: ' . l:escapedPayload
 	let l:cmd = g:OPENAI_ASSISTANT_THREAD_MESSAGE_CMD
 	let l:response = substitute(l:cmd,'{thread_id}',l:threadId,'')
@@ -263,7 +261,7 @@ function! CreateThreadMessage(messageRequest, outputfile)
 
 	let l:curl_cmd = l:response. l:jsonEncodedPayload . ' -o ' . l:generatedOutputFile
     "echo 'curl_cmd - CreateThreadMessage: ' . l:curl_cmd
-	execute '!' . l:curl_cmd
+	execute 'silent !' . l:curl_cmd
     return l:generatedOutputFile
 endfunction
 
@@ -357,7 +355,7 @@ function! ListFilesWithExtensions(directoryPath, extMap, outputDir, ignoreFiles)
             " Check if the item is in the ignore list
             let itemName = fnamemodify(item, ':t')
             if itemName =~ '\V\<' . join(a:ignoreFiles, '\>\|\<') . '\>'
-                echo 'Ignoring: ' . itemName
+                call LogMessage('Ignoring: ' . itemName)
                 continue
             endif
 
@@ -385,7 +383,7 @@ function! ListFilesWithExtensions(directoryPath, extMap, outputDir, ignoreFiles)
                         endif
 
                         " Output the operation
-                        echo 'Copied with UTF-8 encoding: ' . item . ' -> ' . newFilePath
+                        call LogMessage('Copied with UTF-8 encoding: ' . item . ' -> ' . newFilePath)
                         break
                     endif
                 endfor
@@ -438,24 +436,24 @@ endfunction
 " Assistant creation response
 function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
-	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt', 'json':'', 'ts':'','html':'', 'cshtml':'' }
+	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt'}
 
-	echo "0. Starting....Extracting source code files from directory: " . a:directoryPath
+	call LogMessage("0. Starting....Extracting source code files from directory: " . a:directoryPath)
 	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ['GlobalUsings.cs','bin','obj','packages','node_modules', 'cache','.vscode','.angular'])
 
-	echo "1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR
+	call LogMessage("1. Starting....Merging files in directory: " . g:OPENAI_SOURCE_DIR)
     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
     call MergeFiles(g:OPENAI_SOURCE_DIR, l:mergedFile)
 
-	echo "2. Starting....Grouping files by namespace"
+	call LogMessage("2. Starting....Grouping files by namespace")
 	call GroupFilesByNamespace(g:OPENAI_SOURCE_DIR, l:mergedFile)
 	let l:assistantName = fnamemodify(g:OPENAI_PROJECT_HOME_DIR, ':t') . '_assistant'
 
-	echo "3. Starting....Created project assistant: " . l:assistantName
+	call LogMessage("3. Starting....Created project assistant: " . l:assistantName)
 
 	"get the full path of the directory
 	let l:directoryPath = fnamemodify(a:directoryPath, ':p')
-	echo 'Creating assistant for project: ' . a:projectName . ' with files in directory: ' . l:directoryPath
+	call LogMessage('Creating assistant for project: ' . a:projectName . ' with files in directory: ' . l:directoryPath)
 	"Generate an assistant for the project
 	let l:assistantId = CreateProjectAssistant(a:projectName, 'A generic .NetCore project assistant', g:OPENAI_CS_PROJECT_ASSISTANT_INSTUCTIONS)
 
@@ -469,13 +467,13 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
 	" let l:uploadedFileIdsReq = json_encode(s:JSONStringify({"file_ids": l:uploadedFileIds}) )
 	let l:uploadedFileIdsReq = json_encode({"file_ids": l:uploadedFileIds}) 
-	echomsg 'Uploaded file ids: ' . l:uploadedFileIdsReq
+	call LogMessage('Uploaded file ids: ' . l:uploadedFileIdsReq)
 
 	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_upload_files_to_vector_store_output.json'
 	let l:cmd = g:OPENAI_VECTOR_STORE_FILE_CMD
 	let l:response = substitute(l:cmd,'{vector_store_id}',l:vectorStoreId,'')
 	let l:curl_cmd = l:response . shellescape(l:uploadedFileIdsReq) . ' -o ' . l:outputfile
-	echomsg 'curl_cmd: ' . l:curl_cmd
+	call LogMessage('curl_cmd: ' . l:curl_cmd)
 
 	" assign uploaded files to vector store
 	execute 'silent !' . l:curl_cmd
@@ -492,7 +490,7 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
 		" Check if the status is 'completed'
 		if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
-			echo "Vector store creation completed successfully. Id: " . l:json_output['id']
+			call LogMessage("Vector store creation completed successfully. Id: " . l:json_output['id'])
 			break
 		elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
 			echoerr "Error in creating vector store: " . l:json_output['error_message']
@@ -500,20 +498,19 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 		endif
 
 		" Provide feedback on the status in the command line
-		echo "Checking completion status... (attempt " . (i+1) . ")"
+		call LogMessage("Checking completion status... (attempt " . (i+1) . ")")
 	endfor
 	" redraw!
 
     let l:assistantOutput = g:OPENAI_OUTPUT_DIR . '/openai_create_project_assistant_output.json'
 	let l:vectorStorePayload = GetVectorStoreToolResources(l:vectorStoreId, l:uploadedFileIds)
-	echomsg 'Vector store payload: ' . l:vectorStorePayload
+	call LogMessage('Vector store payload: ' . l:vectorStorePayload)
 
 
 	let l:vectorStoreAssignCmd = g:OPENAI_ASSIGN_VECTOR_STORE_TO_ASSISTANT_CMD
 	let l:vectorStoreAssignResponse = substitute(l:vectorStoreAssignCmd, '{assistant_id}', l:assistantId, '')
 	let l:vectorStoreAssignCurlCmd = l:vectorStoreAssignResponse . shellescape(l:vectorStorePayload) . ' -o ' . l:assistantOutput
 
-	" echomsg 'Vector store assign cmd: ' . l:vectorStoreAssignCurlCmd
 	execute '!' . l:vectorStoreAssignCurlCmd
 	" let l:ids = json_encode(l:uploadedFileIds)
 	call WriteJSONToFile(l:uploadedFileIds, g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json')
@@ -550,10 +547,10 @@ function! MapValues(input_dict, search_key, search_value)
                 let resultDict[key] = value
             endfor
         else
-            echo "Error: Arrays for search_key and search_value are of different lengths."
+            call LogMessage("Error: Arrays for search_key and search_value are of different lengths.")
         endif
     else
-        echo "Error: One or both keys not found in the input dictionary."
+        call LogMessage("Error: One or both keys not found in the input dictionary.")
     endif
 
     return resultDict
@@ -595,7 +592,7 @@ function! DeleteAllAssistantFiles()
 
 	" if the output file doesn't exist, or is empty, return
 	if !filereadable(l:outputfile) || getfsize(l:outputfile) == 0
-		echo 'No OPENAI files found'
+		call LogMessage('No OPENAI files found')
 		return
 	endif
 
@@ -654,7 +651,7 @@ function! DeleteCsProjectUploadedAssistantFiles(filepath)
 
     " Iterate over each object in the JSON array
     for fileId in fileIds
-		echo 'Deleting file with id: ' . fileId
+		call LogMessage('Deleting file with id: ' . fileId)
 		call DeleteOpenAIAssistantFile(fileId)
     endfor
 endfunction
@@ -671,7 +668,7 @@ command! -nargs=0 OpenAIDeleteCsProjectUploadedAssistantFiles call DeleteCsProje
 function! OpenAIUploadAssistantFiles(directoryPath)
     " If directoryPath is not a directory, return
     if !isdirectory(a:directoryPath)
-        echo 'Directory does not exist: ' . a:directoryPath
+        call LogMessage('Directory does not exist: ' . a:directoryPath)
         return
     endif
 
@@ -750,7 +747,7 @@ function! DeleteAllVectorStores()
 		call ListVectorStores(l:outputfile)
 		" if the output file doesn't exist, or is empty, return
 		if !filereadable(l:outputfile) || getfsize(l:outputfile) == 0
-			echo 'No OPENAI vector stores found'
+			call LogMessage('No OPENAI vector stores found')
 			return
 		endif
 
@@ -789,7 +786,7 @@ function! CreateVectorStore(name, expirationDays)
 
         " Check if the status is 'completed'
         if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
-            echo "Vector store creation completed successfully. Id: " . l:json_output['id']
+            call LogMessage("Vector store creation completed successfully. Id: " . l:json_output['id'])
 			redraw!
 			return l:json_output['id']
             break
@@ -799,7 +796,7 @@ function! CreateVectorStore(name, expirationDays)
         endif
 
         " Provide feedback on the status in the command line
-        echo "Checking completion status... (attempt " . (i+1) . ")"
+        call LogMessage("Checking completion status... (attempt " . (i+1) . ")")
     endfor
 
     if i == l:max_attempts
@@ -856,7 +853,7 @@ endfunction
 function! UploadFiles(directoryPath)
     " Check if directoryPath is not a directory, return an empty list
     if !isdirectory(a:directoryPath)
-        echo 'Directory does not exist: ' . a:directoryPath
+        call LogMessage('Directory does not exist: ' . a:directoryPath)
         return []
     endif
 
@@ -1125,7 +1122,7 @@ function! GroupFilesByNamespace(dir, ignoreFilename)
     for file in processedFiles
         call delete(file)
     endfor
-	echo 'Files grouped by namespace'
+	call LogMessage('Files grouped by namespace')
 endfunction
 
 " Given a json file containing a dictionary with filenames as keys and namespaces as values,
@@ -1145,7 +1142,7 @@ function! GetFileNamespaces(filesJoinNamespacesJsonFile, searchFile)
 		if has_key(jsonObj, a:searchFile)
 			let namespaces = jsonObj[a:searchFile]
 		else
-			echo 'File not found in the dictionary: ' . a:searchFile
+			call LogMessage('File not found in the dictionary: ' . a:searchFile)
 		endif
 	endif
 	return namespaces
@@ -1187,127 +1184,14 @@ function! GetUploadedFileIdByNamespace(filenameArray, jsonFilePath)
 endfunction
 
 
-" Function to find uploaded file ids containing the given classname.
-" Parameters:
-" classname: Name of the class to search for, case sensitive and without extension.
-" groupFilesByNamespaceJsonFile: [Optional] Path to the file containing the JSON response creating cs project assistant. This file contains group files by namespace output.
-" Returns: List of file ids for the given classname
-" Sample call: echo GetUploadedFileIdByClassname('JITDecisionController','')
-" function! GetUploadedFileIdByClassname(classname, groupFilesByNamespaceJsonFile)
-"     "if jsonFilePath is empty, set it to 'openai_upload_assistant_files_output.json'
-"     if empty(a:groupFilesByNamespaceJsonFile)
-"         let l:filesByNamespaceJsonFile = g:OPENAI_OUTPUT_DIR . '/openai_group_files_by_namespace_output.json'
-"     else
-"         let l:filesByNamespaceJsonFile = a:groupFilesByNamespaceJsonFile
-"     endif
-"     "Get matching namespaces for the given classname
-"     let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
-"     function! s:GetAllUploadedFileIds(jsonFilePath)
-"         " Read and decode the JSON file
-"         let jsonContent = json_decode(join(readfile(a:jsonFilePath), ''))
-"
-"         " Initialize an empty list for matching IDs
-"         let matchingIds = []
-"
-"         " Iterate over each object in the JSON array and add the 'id' to the list of matching IDs
-"         for jsonObject in jsonContent
-"             " Check if the 'id' is present and add it to the list of matching IDs
-"             if has_key(jsonObject, 'id')
-"                 echo "Adding id: " . jsonObject['id'] . " for file: " . jsonObject['filename'] . " to the list"
-"                 call add(matchingIds, jsonObject['id'])
-"             endif
-"         endfor
-"
-"         return matchingIds
-"     endfunction
-"
-"     let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-"     let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
-"
-"     "if no namespaces found, return
-"     if len(l:namespaces) == 0
-"         echo 'No namespaces found for classname: ' . a:classname
-"         echo 'Using all available files'
-"         let l:uploadedJsonFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-"         let l:uploadedFileIds = s:GetAllUploadedFileIds(l:uploadedJsonFiles)
-"         echo 'A total of ' . len(l:uploadedFileIds) . ' files found in the project assistant'
-"
-"         " If the number of files is greater than 10, merge them into a single file
-"         if len(l:uploadedFileIds) > 10
-"             echo 'Thread files are greater than 10. Using merged file instead...'
-"             " get the namespace from the merged file by taking the filename from the path
-"             let l:namespace = fnamemodify(l:mergedFile, ':t')
-"             echo 'Using namespace: ' . l:namespace
-"             return GetUploadedFileIdByNamespace([l:namespace], l:uploadedFiles)
-"         endif
-"         return l:uploadedFileIds
-"     endif
-"     "Get file ids for the given namespaces
-"     let l:fileIds = GetUploadedFileIdByNamespace(l:namespaces, l:uploadedFiles )
-"     return l:fileIds
-" endfunction
-
 function! GetUploadedFileIdByClassname(classname, groupFilesByNamespaceJsonFile)
 	let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
 	" read the content of the uploaded files json and decode it to an array of strings
 	let l:uploadedFilesContent = join(readfile(l:uploadedFiles), "\n")
 	let l:uploadedFiles = json_decode(l:uploadedFilesContent)
 	return l:uploadedFiles
-
-
-
-	" "if jsonFilePath is empty, set it to 'openai_upload_assistant_files_output.json'
-	" if empty(a:groupFilesByNamespaceJsonFile)
-	"     let l:filesByNamespaceJsonFile = g:OPENAI_OUTPUT_DIR . '/openai_group_files_by_namespace_output.json'
-	" else
-	"     let l:filesByNamespaceJsonFile = a:groupFilesByNamespaceJsonFile
-	" endif
-	" "Get matching namespaces for the given classname
-	" let l:namespaces = GetFileNamespaces(l:filesByNamespaceJsonFile, a:classname)
-    " function! s:GetAllUploadedFileIds(jsonFilePath)
-    "     " Read and decode the JSON file
-    "     let jsonContent = json_decode(join(readfile(a:jsonFilePath), ''))
-    "
-    "     " Initialize an empty list for matching IDs
-    "     let matchingIds = []
-    "
-    "     " Iterate over each object in the JSON array and add the 'id' to the list of matching IDs
-    "     for jsonObject in jsonContent
-    "         " Check if the 'id' is present and add it to the list of matching IDs
-    "         if has_key(jsonObject, 'id')
-    "             echo "Adding id: " . jsonObject['id'] . " for file: " . jsonObject['filename'] . " to the list"
-    "             call add(matchingIds, jsonObject['id'])
-    "         endif
-    "     endfor
-    "
-    "     return matchingIds
-    " endfunction
-    "
-	" let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-    " let l:mergedFile = g:OPENAI_SOURCE_DIR . '/merged.txt'
-    "
-	" "if no namespaces found, return
-	" if len(l:namespaces) == 0
-	"     echo 'No namespaces found for classname: ' . a:classname
-    "     echo 'Using all available files'
-	"     let l:uploadedJsonFiles = g:OPENAI_OUTPUT_DIR . '/openai_upload_assistant_files_output.json'
-    "     let l:uploadedFileIds = s:GetAllUploadedFileIds(l:uploadedJsonFiles)
-    "     echo 'A total of ' . len(l:uploadedFileIds) . ' files found in the project assistant'
-    "
-    "     " If the number of files is greater than 10, merge them into a single file
-    "     if len(l:uploadedFileIds) > 10
-    "         echo 'Thread files are greater than 10. Using merged file instead...'
-    "         " get the namespace from the merged file by taking the filename from the path
-    "         let l:namespace = fnamemodify(l:mergedFile, ':t')
-    "         echo 'Using namespace: ' . l:namespace
-    "         return GetUploadedFileIdByNamespace([l:namespace], l:uploadedFiles)
-    "     endif
-	"     return l:uploadedFileIds
-	" endif
-	" "Get file ids for the given namespaces
-	" let l:fileIds = GetUploadedFileIdByNamespace(l:namespaces, l:uploadedFiles )
-	" return l:fileIds
 endfunction
+
 " Function to create a thread message for a given class and assign corresponding file ids from uploaded namespace files.
 " It creates a new thread or uses an existing thread if one exists for the given class.
 " Parameters:
@@ -1353,13 +1237,13 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
         if empty(a:classname)
             let l:namespaceMappingFile = g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json'
             let l:namespaces = s:GetUploadedNamespaces(l:namespaceMappingFile)
-            echo 'A total of ' . len(l:namespaces) . ' namespaces found in the project assistant'
+            call LogMessage('A total of ' . len(l:namespaces) . ' namespaces found in the project assistant')
 			" if more than one namespace found, check if one of them is 'merged.txt'. If yes, return that namespace
 			if len(l:namespaces) > 1
 				let l:mergedFile = 'merged.txt'
 				" check if the namespce list constains 'merged.txt'
 				if index(l:namespaces, l:mergedFile) != -1
-					echo 'Using namespace: ' . fnamemodify(l:mergedFile, ':t')
+					call LogMessage('Using namespace: ' . fnamemodify(l:mergedFile, ':t'))
 					return [fnamemodify(l:mergedFile, ':t')]
 				endif
 			endif
@@ -1379,7 +1263,7 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 		if len(l:namespaces) > 1
 			let l:mergedFile = 'merged.txt'
 			if index(l:namespaces, l:mergedFile) != -1
-				echo 'Using namespace: ' . fnamemodify(l:mergedFile, ':t')
+				call LogMessage('Using namespace: ' . fnamemodify(l:mergedFile, ':t'))
 				return [fnamemodify(l:mergedFile, ':t')]
 			endif
 		endif
@@ -1399,19 +1283,19 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 	" Create a thread for each namespace
 	" TODO: Loop not needed here anymore. There can only be one namespace.
 	for namespace in l:classNamespaces
-		echomsg 'Creating thread for namespace: ' . namespace
+		call LogMessage('Creating thread for namespace: ' . namespace)
 		" Get a thread id for the given namespace
 		"echo 'Creating thread for namespace: ' . namespace
 		let l:threadId = GetThreadIdByNamespace(namespace, '')
-		echomsg 'threadId: ' . l:threadId
+		call LogMessage('threadId: ' . l:threadId)
 
 		" Create a thread message payload
 		let l:threadMessageRequest = ThreadMessageJsonPayload(l:threadId, l:message)
 
-		echomsg 'threadMessageRequest: ' . l:threadMessageRequest
+		call LogMessage('threadMessageRequest: ' . l:threadMessageRequest)
 		let l:messageFilename = fnamemodify(namespace, ':t:r') . '.' . l:threadMessagePayloadFilename
 		let l:threadMessageOutputFile = s:ReplaceDotsInFilename(l:messageFilename, '_')
-		echomsg 'threadMessageOutputFile: ' . l:threadMessageOutputFile
+		call LogMessage('threadMessageOutputFile: ' . l:threadMessageOutputFile)
 		let l:threadMessageFile = CreateThreadMessage(l:threadMessageRequest, l:threadMessageOutputFile)
 		call ExecuteThreadMessage(l:threadMessageFile, 'thread.message.completed')
 	endfor
@@ -1468,7 +1352,7 @@ function! GetThreadIdByNamespace(namespace, namespaceJoinThreadJsonFile)
     " Check if the namespace is in the dictionary and its value is not null or empty
     if has_key(l:threadsJson, a:namespace) && l:threadsJson[a:namespace] != ''
         " Return the thread ID for the existing namespace
-        echo 'Thread ID found for namespace: ' . a:namespace
+        call LogMessage('Thread ID found for namespace: ' . a:namespace)
         let l:threadId = l:threadsJson[a:namespace]
     else
         " Create a new thread for the given namespace
@@ -1507,7 +1391,7 @@ function! AssertNoCarriageReturns(payload)
     if len(l:jsonString) != len(l:cleanedJsonString)
         throw 'Payload contains ^M characters'
     else
-        echom 'Payload does not contain ^M characters'
+        call LogMessage('Payload does not contain ^M characters')
     endif
 endfunction
 
@@ -1550,7 +1434,7 @@ function! ExecuteThreadMessage(messageJson, eventName)
 	let l:threadRunJson = json_encode(l:threadRunPayload)
 
 	" Log the JSON payload
-	echom 'JSON Payload: ' . l:threadRunJson
+	call LogMessage('JSON Payload: ' . l:threadRunJson)
 
 	" Assemble the curl command for streaming as a list of arguments
 	" Substitute the thread_id in the g:OPENAI_THREAD_RUN_CMD with the actual thread_id
@@ -1568,7 +1452,7 @@ function! ExecuteThreadMessage(messageJson, eventName)
 
 	" Verify the temporary file creation
 	if !filereadable(l:tempfile)
-		echom 'Error: Temporary file creation failed'
+		call LogMessage('Error: Temporary file creation failed')
 		return
 	endif
 
@@ -1592,14 +1476,14 @@ function! ExecuteThreadMessage(messageJson, eventName)
 	call system('chmod +x ' . l:shell_script_file)
 
 	" Log the shell script to verify it
-	echom 'Executing shell script: ' . l:shell_script_file
+	call LogMessage('Executing shell script: ' . l:shell_script_file)
 
 	" Execute the shell script asynchronously with streaming output
-	execute '!' . l:shell_script_file
+	execute 'silent !' . l:shell_script_file
 
 	" Check if the tempfile has content
 	if !filereadable(l:tempfile) || getfsize(l:tempfile) == 0
-		echom 'Error: No data written to temporary file'
+		call LogMessage('Error: No data written to temporary file')
 		redraw!
 		return
 	endif
@@ -1609,9 +1493,9 @@ function! ExecuteThreadMessage(messageJson, eventName)
 
 	" Verify the output file creation
 	if filereadable(l:outputfile)
-		echom 'Curl command executed and output saved to: ' . l:outputfile
+		call LogMessage('Curl command executed and output saved to: ' . l:outputfile)
 	else
-		echom 'Error: Output file creation failed'
+		call LogMessage('Error: Output file creation failed')
 	endif
 
 	" Clean up the temporary script file
@@ -1647,7 +1531,7 @@ endfunction
 "         - Extracts the thread_id and id fields from each decoded JSON object.
 "
 "     5. Log the Extracted IDs:
-"         - Logs the extracted thread_id and message_id using the echom command.
+"         - Logs the extracted thread_id and message_id using the echomsg command.
 "
 "     6. Return the Extracted IDs as a List of Dictionaries:
 "         - Returns a list of dictionaries containing the thread_id and message_id for each JSON object.
@@ -1683,14 +1567,13 @@ function! ExtractThreadAndMessageIds(file)
             let l:thread_id = l:data.thread_id
             let l:message_id = l:data.id
 
-            " Log the extracted IDs
-            echom 'thread_id: ' . l:thread_id
-            echom 'message_id: ' . l:message_id
+            call LogMessage('thread_id: ' . l:thread_id)
+            call LogMessage('message_id: ' . l:message_id)
 
             " Add the extracted IDs to the list
             call add(l:idsList, {'thread_id': l:thread_id, 'message_id': l:message_id})
         else
-            echom "Error: 'thread_id' or 'id' not found in JSON data"
+            call LogMessage("Error: 'thread_id' or 'id' not found in JSON data")
         endif
     endfor
 
@@ -1773,10 +1656,10 @@ function! RetrieveMessageById(threadId, messageId, outputFile)
 	let l:curl_cmd = l:curl_cmd . ' -o ' . a:outputFile
 
 	" Log the command to verify it
-	echom 'Executing curl command: ' . l:curl_cmd
+	call LogMessage('Executing curl command: ' . l:curl_cmd)
 
 	" Execute the curl command asynchronously with streaming output
-	execute '!' . l:curl_cmd
+	execute 'silent !' . l:curl_cmd
 endfunction
 
 
@@ -1852,6 +1735,7 @@ function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, di
     let l:responsesDir = l:projectHomeDirectory . '/responses'
     let l:outputDir = l:projectHomeDirectory . '/output'
     let l:sourceDir = l:projectHomeDirectory . '/source'
+    let l:logs = l:projectHomeDirectory . '/logs'
 
     if !isdirectory(l:requestsDir)
         call mkdir(l:requestsDir, 'p')
@@ -1859,6 +1743,7 @@ function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, di
     call mkdir(l:responsesDir, 'p')
     call mkdir(l:outputDir, 'p')
     call mkdir(l:sourceDir, 'p')
+    call mkdir(l:logs, 'p')
 
     " set global variables for the project home directory and requests and responses directories
     call ClearPersistentVariables()
@@ -1867,6 +1752,7 @@ function! CreateProjectAssistantWorkingDir(projectPath, projectHomeDirectory, di
     call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
     call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
     call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
+    call SetPersistentVariable('OPENAI_LOGS_DIR', l:logs)
 endfunction
 
 
@@ -1993,6 +1879,43 @@ function! PreserveAndRecreate(dir, preserveDirs)
     call delete(tempDir, 'rf')
 endfunction
 
+" Function: CreateLogFile
+"
+" Purpose:
+"     Creates a log file in the 'logs' directory within the project home directory.
+"     The log file name is based on the current date and time.
+"
+" Notes:
+"     - Ensures the 'logs' directory exists before creating the log file.
+"     - Logs the path of the created log file.
+"
+" Example Usage:
+"     call CreateLogFile()
+"
+function! CreateLogFile()
+    " Define the logs directory path
+    let l:logDir = g:OPENAI_PROJECT_HOME_DIR . '/logs'
+
+    " Create the logs directory if it doesn't exist
+    if !isdirectory(l:logDir)
+        call mkdir(l:logDir, 'p')
+    endif
+
+    " Define the log file name with current date and time
+    let l:logFile = l:logDir . '/openai_log_' . strftime('%Y-%m-%d_%H-%M-%S') . '.log'
+
+    " Create the log file
+    call writefile([], l:logFile)
+
+    " Log the creation of the log file
+    echom 'Log file created: ' . l:logFile
+
+    " Return the log file path
+    return l:logFile
+endfunction
+
+
+
 " Function: SetupProjectAssistant
 "
 " Purpose:
@@ -2036,6 +1959,9 @@ endfunction
 "     - This function assumes that the CreateProjectAssistantWorkingDir and CreateOpenAICsProjectAssistant functions are defined elsewhere in the codebase.
 "
 function! SetupProjectAssistant(projectPath, directoryToPreserve)
+	" Create log file
+	let s:logfile = CreateLogFile()
+
     " create a working directory for the project
     call CreateProjectAssistantWorkingDir(a:projectPath, '', a:directoryToPreserve)
 
@@ -2067,10 +1993,10 @@ function! SetupProjectAssistant(projectPath, directoryToPreserve)
     endfunction
 
     " create a sample json message request
-    echo "4. Starting....Created sample json message request: " . g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json'
+    call LogMessage("4. Starting....Created sample json message request: " . g:OPENAI_REQUESTS_DIR . '/sample_json_message_request.json')
     call s:CreateSampleJsonMessageRequest(g:OPENAI_REQUESTS_DIR)
 
-    echo "5. Done....Setup complete."
+    call LogMessage("5. Done....Setup complete.")
     " Refresh the buffer
     execute 'redraw!'
     
@@ -2085,9 +2011,9 @@ endfunction
 " None
 " Sample call: call MergeFiles('C:\Users\user\Documents\OpenAI\OpenAIAssistant\requests', 'C:\Users\user\Documents\OpenAI\OpenAIAssistant\requests\merged.txt')
 function! MergeFiles(dir, outputfile)
-    echo 'Merging files in directory: ' . a:dir. ' into file: ' . a:outputfile
+    call LogMessage('Merging files in directory: ' . a:dir. ' into file: ' . a:outputfile)
     let l:filePaths = split(glob(a:dir . '/*'), "\n")
-    echo 'Files to merge: ' . join(l:filePaths, ', ')
+    call LogMessage('Files to merge: ' . join(l:filePaths, ', '))
     let l:mergedFileContents = []
 
     for l:file in l:filePaths
@@ -2145,7 +2071,7 @@ endfunction
 function! SetWorkingProject(projectPath)
     " Check that the project setup is complete
     if !ProjectSetupComplete(a:projectPath)
-        echo 'Project setup is not complete. Please run :OpenAIProjectSetup'
+        call LogMessage('Project setup is not complete. Please run :OpenAIProjectSetup')
         return ''
     endif
 
@@ -2178,7 +2104,7 @@ function! SetWorkingProject(projectPath)
 	call SetPersistentVariable('OPENAI_RESPONSES_DIR', l:responsesDir)
 	call SetPersistentVariable('OPENAI_OUTPUT_DIR', l:outputDir)
 	call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
-    echo 'Working Project set to: ' . g:OPENAI_PROJECT_HOME_DIR
+    call LogMessage('Working Project set to: ' . g:OPENAI_PROJECT_HOME_DIR)
 endfunction
  command! -nargs=1 OpenAISetWorkingProject call SetWorkingProject(<f-args>)
 
@@ -2186,13 +2112,13 @@ endfunction
 function! GetWorkingProject()
     " Check if g:OPENAI_PROJECT_HOME_DIR is defined and not empty
     if !exists('g:OPENAI_PROJECT_HOME_DIR') || empty(g:OPENAI_PROJECT_HOME_DIR)
-        echo 'No working project set. Please run :OpenAISetWorkingProject'
+        call LogMessage('No working project set. Please run :OpenAISetWorkingProject')
         return ''
     endif
 
     " Check if the directory exists
     if !isdirectory(g:OPENAI_PROJECT_HOME_DIR)
-        echo 'Working project directory does not exist. Please run :OpenAISetupProject'
+        call LogMessage('Working project directory does not exist. Please run :OpenAISetupProject')
         return ''
     endif
 
@@ -2229,12 +2155,12 @@ function! SetHomeDirectory(homeDirectory)
     " check that the home directory exists
     if !isdirectory(l:projectHomeDir)
         " create the directory
-        echo 'Creating directory: ' . l:projectHomeDir
+        call LogMessage('Creating directory: ' . l:projectHomeDir)
         call mkdir(l:projectHomeDir, 'p')
     endif
 
     let g:OPENAI_WORKING_DIR = l:projectHomeDir
-    echo 'Home directory set to: ' . g:OPENAI_WORKING_DIR
+    call LogMessage('Home directory set to: ' . g:OPENAI_WORKING_DIR)
 
     " clear project's directories
      let g:OPENAI_PROJECT_HOME_DIR = ''
@@ -2258,6 +2184,8 @@ endfunction
 command! -nargs=1 OpenAIRetrieveFileContentById call RetrieveFileById(<f-args>)
 
 function! ReloadWorkingProject()
+	" reset log file
+	let s:logfile = CreateLogFile()
     " get current working project
     let l:projectHomeDir = g:OPENAI_PROJECT_HOME_DIR
     " open /output/openai_create_project_assistant_output.json and parse out the id property
@@ -2266,7 +2194,7 @@ function! ReloadWorkingProject()
     let l:outputJsonObject = json_decode(l:outputJson)
     let l:assistantId = l:outputJsonObject['id']
 
-    echo 'Deleting project assistant: ' . l:assistantId
+    call LogMessage('Deleting project assistant: ' . l:assistantId)
     call DeleteOpenAIAssistant(l:assistantId)
 
     " Delete all uploaded files by the project assistant
@@ -2279,7 +2207,7 @@ function! ReloadWorkingProject()
     let l:projectFileObj = json_decode(l:outputJson)
     let l:projectPath = l:projectFileObj['project_path']
     let l:dirName = GetDirectoryName(l:projectPath)
-    echo 'Project name: ' . l:dirName
+    call LogMessage('Project name: ' . l:dirName)
     "Create the project assistant but retain the contents of the requests directory
     call SetupProjectAssistant(l:dirName, ['requests'])
     " Open the working project in a vertical split
@@ -2299,3 +2227,25 @@ endfunction
 if filereadable(expand("~/.vim_persistent_variables"))
 	execute readfile(expand("~/.vim_persistent_variables"), 'b')->join("\n")
 endif
+
+
+" Function: LogMessage
+"
+" Purpose:
+"     Logs a message to a specified log file without displaying it in the terminal.
+"
+" Parameters:
+"     msg (string): The message to be logged.
+"     logFile (string): The path to the log file where the message should be written.
+"
+" Example Usage:
+"     call LogMessage('This is a test message', '/path/to/logfile.log')
+"
+function! LogMessage(msg)
+    " Open the log file in append mode and write the message
+	" create log file if it doesn't exist
+	if !filereadable(s:logfile)
+		let s:logfile = CreateLogFile()
+	endif
+    call writefile([a:msg], s:logfile, 'a')
+endfunction
