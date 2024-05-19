@@ -2235,6 +2235,11 @@ endfunction
 " Uploading a random file to Vector Store
 "
 function! GetActiveVectorStoreId(file)
+	" if file is empty or does not exist, return
+	if empty(a:file) || !filereadable(a:file)
+		call LogMessage('Invalid file path: ' . a:file)
+		return ''
+	endif
 	let l:outputJson = join(readfile(a:file), "\n")
 	let l:outputJsonObject = json_decode(l:outputJson)
 	let l:activeVectorStoreId = l:outputJsonObject['id']
@@ -2251,11 +2256,32 @@ endfunction
 " files: A list of file paths to upload to the Vector Store.
 " Returns:
 " None
-" Sample call: call UploadFilesToVectorStore(['/path/to/file1', '/path/to/file2'])
-function! UploadFilesToVectorStore(files)
+" Sample call: call UploadFilesToVectorStore('/path/to/directory/')
+function! UploadFilesToVectorStore(dir)
 	let l:fileIds = []
+	let l:files = []
+
+	" if dir is a directory path, get all files in the directory
+	let l:path = expand(a:dir)
+
+	if isdirectory(l:path)
+		let l:files = split(glob(l:path . '/*'), "\n")
+	else
+		call LogMessage('Invalid directory path: ' . l:path)
+		echo 'Invalid directory path: ' . l:path
+		return
+	endif
+
 	let l:activeVectorStoreId = GetActiveVectorStoreId(GetPathToVectorStoreOutputfile())
-	for l:file in a:files
+
+	" if activeVectorStoreId is empty, return
+	if empty(l:activeVectorStoreId)
+		call LogMessage('No active Vector Store found')
+		echo 'No active Vector Store found'
+		return
+	endif
+
+	for l:file in l:files
 		call LogMessage('Attempting to upload file: ' . l:file)
         if filereadable(l:file)
 			let l:outputfile = tempname()
@@ -2293,6 +2319,11 @@ function! UploadFilesToVectorStore(files)
 	execute 'silent !' . l:curl_cmd
 	call PollVectorStoreUploadCompletion()
 endfunction
+
+" command to upload files to the active Vector Store.
+" Parameters:
+" dir: The directory containing the files to upload.
+command! -nargs=1 OpenAIUploadFilesToVectorStore call UploadFilesToVectorStore(<f-args>)
 
 function! PollVectorStoreUploadCompletion()
 	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_vector_poll_output.json'
