@@ -46,6 +46,9 @@ let g:OPENAI_DELETE_VECTOR_STORE_CMD = 'curl -sS -X DELETE https://api.openai.co
 
 let g:OPENAI_VECTOR_STORE_FILE_CMD = 'curl -sS -X POST https://api.openai.com/v1/vector_stores/{vector_store_id}/file_batches -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 
+let g:OPENAI_RETRIEVE_VECTOR_STORE_CMD = 'curl https://api.openai.com/v1/vector_stores/{vector_store_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2"'
+
+
 let g:OPENAI_ASSIGN_VECTOR_STORE_TO_ASSISTANT_CMD = 'curl -sS -X POST https://api.openai.com/v1/assistants/{assistant_id} -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
 
 let g:OPENAI_COMPLETION_CMD = 'curl -sS -X POST https://api.openai.com/v1/chat/completions -H "Content-Type: application/json" -H "Authorization: Bearer ' . $OPENAI_API_KEY . '" -d @'
@@ -490,29 +493,7 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
 	" assign uploaded files to vector store
 	execute 'silent !' . l:curl_cmd
-	" Maximum number of attempts to check the 'completed' status
-	let l:max_attempts = 12
-
-	" Start polling the output file
-	for i in range(l:max_attempts)
-		" Wait for a bit before checking the status
-		call timer_start(5000, {-> v:null})
-
-		" Read and parse the JSON output
-		let l:json_output = json_decode(join(readfile(l:outputfile), "\n"))
-
-		" Check if the status is 'completed'
-		if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
-			call LogMessage("Vector store creation completed successfully. Id: " . l:json_output['id'])
-			break
-		elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
-			echoerr "Error in creating vector store: " . l:json_output['error_message']
-			break
-		endif
-
-		" Provide feedback on the status in the command line
-		call LogMessage("Checking completion status... (attempt " . (i+1) . ")")
-	endfor
+	call PollVectorStoreUploadCompletion()
 	" redraw!
 
     let l:assistantOutput = g:OPENAI_OUTPUT_DIR . '/openai_create_project_assistant_output.json'
@@ -2310,29 +2291,37 @@ function! UploadFilesToVectorStore(files)
 	let l:curl_cmd = l:response . shellescape(l:fileIdsToUploadToVectorStore) . ' -o ' . l:vectorStoreUploadOutputFile
 	call LogMessage('curl_cmd: ' . l:curl_cmd)
 	execute 'silent !' . l:curl_cmd
+	call PollVectorStoreUploadCompletion()
+endfunction
 
-	" Maximum number of attempts to check the 'completed' status
-	let l:max_attempts = 30
+function! PollVectorStoreUploadCompletion()
+	let l:outputfile = g:OPENAI_OUTPUT_DIR . '/openai_vector_poll_output.json'
+	let l:cmd = g:OPENAI_RETRIEVE_VECTOR_STORE_CMD
+	let l:response = substitute(l:cmd,'{vector_store_id}',GetActiveVectorStoreId(GetPathToVectorStoreOutputfile()),'')
+	let l:curl_cmd = l:response . ' -o ' . l:outputfile
+	call LogMessage('curl_cmd: ' . l:curl_cmd)
+	execute 'silent !' . l:curl_cmd
 
 	" Start polling the output file
+	let l:max_attempts = 30
 	for i in range(l:max_attempts)
 		" Wait for a bit before checking the status
 		call timer_start(5000, {-> v:null})
 
 		" Read and parse the JSON output
-		let l:json_output = json_decode(join(readfile(l:vectorStoreUploadOutputFile), "\n"))
+		let l:json_output = json_decode(join(readfile(l:outputfile), "\n"))
+		" retrieve the 'file_counts' object and read the 'in_progress'
+		let l:fileCounts = l:json_output['file_counts']
+		let l:inProgress = l:fileCounts['in_progress']
 
-		" Check if the status is 'completed'
-		if has_key(l:json_output, 'status') && l:json_output['status'] == 'completed'
-			call LogMessage("Vector store creation completed successfully. Id: " . l:json_output['id'])
-			break
-		elseif has_key(l:json_output, 'status') && l:json_output['status'] == 'failed'
-			echoerr "Error in creating vector store: " . l:json_output['error_message']
+		" if in_progress is 0, the upload is complete
+		if l:inProgress == 0
+			call LogMessage('Upload to Vector Store complete')
 			break
 		endif
-
-		" Provide feedback on the status in the command line
 		call LogMessage("Checking completion status... (attempt " . (i+1) . ")")
+		execute 'silent !' . l:curl_cmd
 	endfor
 	redraw!
+	echo 'Upload to Vector Store complete'
 endfunction
