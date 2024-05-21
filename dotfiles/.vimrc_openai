@@ -1881,6 +1881,12 @@ endfunction
 "     call CreateLogFile()
 "
 function! CreateLogFile()
+	" if g:OPENAI_PROJECT_HOME_DIR is not defined or is empty, return an empty string
+	if (!exists('g:OPENAI_PROJECT_HOME_DIR') || empty(g:OPENAI_PROJECT_HOME_DIR))
+		echoerr 'Error: g:OPENAI_PROJECT_HOME_DIR is not defined or is empty'
+		return
+	endif
+
     " Define the logs directory path
     let l:logDir = g:OPENAI_PROJECT_HOME_DIR . '/logs'
 
@@ -2094,7 +2100,7 @@ function! SetWorkingProject(projectPath)
 	call SetPersistentVariable('OPENAI_SOURCE_DIR', l:sourceDir)
     call LogMessage('Working Project set to: ' . g:OPENAI_PROJECT_HOME_DIR)
 endfunction
- command! -nargs=1 OpenAISetWorkingProject call SetWorkingProject(<f-args>)
+command! -nargs=1 OpenAISetWorkingProject call SetWorkingProject(<f-args>)
 
 
 function! GetWorkingProject()
