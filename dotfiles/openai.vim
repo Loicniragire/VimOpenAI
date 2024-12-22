@@ -1128,7 +1128,7 @@ function! ExecuteThreadMessage(messageJson)
 	let l:threadId = json_decode(join(readfile(a:messageJson), "\n"))['thread_id']
 
 	" create a json payload with the thread id
-	let l:threadRunPayload = {"assistant_id": l:projectAssistantId, "additional_instructions": "When asked to perform a code review, rewrite, or generate a piece of code, the assistant shall generate request code and return file_ids to download all generated code files. "}
+	let l:threadRunPayload = {"assistant_id": l:projectAssistantId, "additional_instructions": "When asked to perform a code review, rewrite, or generate a piece of code, the assistant shall generate request code and return file_ids to download all generated code files. Please do not simply return links to generated files. "}
 	let l:threadRunJson = CreateJSONPayload(l:threadRunPayload)
 	" stringfy the json payload
     let l:encodedThreadRunJson = json_encode(l:threadRunJson)

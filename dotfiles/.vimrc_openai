@@ -70,6 +70,7 @@ let g:OPENAI_ASSISTANT_RETRIEVE_MESSAGE_CMD = 'curl https://api.openai.com/v1/th
 
 let g:OPENAI_ASSISTANT_LIST_THREAD_MESSAGE_CMD = 'curl "https://api.openai.com/v1/threads/{thread_id}/messages?limit={msg_limit}" -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 let g:OPENAI_ASSISTANT_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs -H "Content-Type: application/json" -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" -d '
+
 let g:OPENAI_ASSISTANT_RETRIEVE_THREAD_RUN_CMD = 'curl https://api.openai.com/v1/threads/{thread_id}/runs/{run_id} -H "Authorization: Bearer ' .  $OPENAI_API_KEY . '" -H "OpenAI-Beta:assistants=v2" '
 let g:OPENAI_ASSISTANT_MODEL = 'gpt-4o'
 let g:OPENAI_ASSISTANT_TEMPERATURE = 0.5
@@ -343,6 +344,12 @@ command! -nargs=+ OpenAIAssistantListThreadMessages call OpenAIAssistantThreadLi
 " 	   Copied with UTF-8 encoding: C:\Users\user\Documents\test\test3.cs -> C:\Users\user\Documents\test\output\test3.txt
 
 function! ListFilesWithExtensions(directoryPath, extMap, outputDir, ignoreFiles)
+	" Log the full path of the directory
+	call LogMessage('Listing files in directory: ' . a:directoryPath)
+
+	" Log the extensions mapping
+	call LogMessage('Extensions mapping: ' . string(a:extMap))
+
     " Create the output directory if it doesn't exist
     if !isdirectory(a:outputDir)
         call mkdir(a:outputDir, 'p')
@@ -443,8 +450,8 @@ endfunction
 " Assistant creation response
 function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 
-	let l:fileExtMapping = {'cs': '', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt'}
-	let l:ignoredFilesAndDirs = ['GlobalUsings.cs','bin','obj','packages','node_modules', 'cache','.vscode','.angular']
+	let l:fileExtMapping = {'cs': 'txt', 'config': 'txt', 'csproj': 'txt', 'sln': 'txt', 'sql': 'txt'}
+	let l:ignoredFilesAndDirs = ['GlobalUsings.cs','bin','obj','packages','node_modules', 'cache','.vscode','.angular','Migrations']
 
 	call LogMessage("0. Starting....Extracting source code files from directory: " . a:directoryPath)
 	call ListFilesWithExtensions(a:directoryPath, l:fileExtMapping, g:OPENAI_SOURCE_DIR, ignoredFilesAndDirs )
@@ -480,7 +487,8 @@ function! CreateOpenAICsProjectAssistant(directoryPath, projectName)
 	let l:vectorStoreId = CreateVectorStore(l:vectorStoreName, l:vectoreStoreExpirationDays)
 	call UploadFiles(g:OPENAI_SOURCE_DIR)
 	let l:uploaded_file_ids_output = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
-	let l:uploadedFileIds = GetUploadedFileIds(l:uploaded_file_ids_output, 10000)
+	" let l:uploadedFileIds = GetUploadedFileIds(l:uploaded_file_ids_output, 10000)
+	let l:uploadedFileIds = GetUploadedFileIds(l:uploaded_file_ids_output, 20)
 
 	let l:uploadedFileIdsReq = json_encode({"file_ids": l:uploadedFileIds}) 
 	call LogMessage('Uploaded file ids: ' . l:uploadedFileIdsReq)
@@ -839,6 +847,9 @@ endfunction
 " Parameters:
 " directoryPath: Path to the directory containing the files to upload
 function! UploadFiles(directoryPath)
+	" log the full path directory path
+	call LogMessage('Uploading files from directory: ' . a:directoryPath)
+
     " Check if directoryPath is not a directory, return an empty list
     if !isdirectory(a:directoryPath)
         call LogMessage('Directory does not exist: ' . a:directoryPath)
@@ -1175,6 +1186,9 @@ endfunction
 function! GetUploadedFileIdByClassname(classname, groupFilesByNamespaceJsonFile)
 	let l:uploadedFiles = g:OPENAI_OUTPUT_DIR . '/openai_uploaded_file_ids_output.json'
 	" read the content of the uploaded files json and decode it to an array of strings
+	" Log the full path of the uploaded files
+	call LogMessage('Reading uploaded files from: ' . l:uploadedFiles)
+
 	let l:uploadedFilesContent = join(readfile(l:uploadedFiles), "\n")
 	let l:uploadedFiles = json_decode(l:uploadedFilesContent)
 	return l:uploadedFiles
@@ -1226,6 +1240,11 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
             let l:namespaceMappingFile = g:OPENAI_OUTPUT_DIR . '/openai_namespace_file_thread_mapping.json'
             let l:namespaces = s:GetUploadedNamespaces(l:namespaceMappingFile)
             call LogMessage('A total of ' . len(l:namespaces) . ' namespaces found in the project assistant')
+			" log global variables relevant to this error:
+			call LogMessage('OPENAI_OUTPUT_DIR: ' . g:OPENAI_OUTPUT_DIR)
+			call LogMessage('OPENAI_WORKING_DIR: ' . g:OPENAI_WORKING_DIR)
+			call LogMessage('OPENAI_PROJECT_HOME_DIR: ' . g:OPENAI_PROJECT_HOME_DIR)
+
 			" if more than one namespace found, check if one of them is 'merged.txt'. If yes, return that namespace
 			if len(l:namespaces) > 1
 				let l:mergedFile = 'merged.txt'
@@ -1267,6 +1286,12 @@ function! CreateAssistantThreadMessageByClassname(threadMessagePayload)
 
 	" Get array of namespaces for the given classname and create a thread for each namespace
 	let l:classNamespaces = s:GetNamespacesByClassname(l:classname, '')
+
+	" Assert that the list of namespaces is not empty
+	if empty(l:classNamespaces)
+		echoerr 'No namespaces found for the given class name: ' . l:classname
+		return
+	endif
 
 	" Create a thread for each namespace
 	" TODO: Loop not needed here anymore. There can only be one namespace.
@@ -1422,7 +1447,7 @@ function! ExecuteThreadMessage(messageJson, eventName)
 	let l:threadRunJson = json_encode(l:threadRunPayload)
 
 	" Log the JSON payload
-	call LogMessage('JSON Payload: ' . l:threadRunJson)
+	call LogMessage('Executing thread message. JSON Payload: ' . l:threadRunJson)
 
 	" Assemble the curl command for streaming as a list of arguments
 	" Substitute the thread_id in the g:OPENAI_THREAD_RUN_CMD with the actual thread_id
@@ -1433,6 +1458,9 @@ function! ExecuteThreadMessage(messageJson, eventName)
 
 	" Add the thread run JSON payload to the curl command
 	let l:curl_cmd = l:curl_cmd . l:escapedJson
+
+	" log the curl command
+	call LogMessage('Executing curl command: ' . l:curl_cmd)
 
 	" Create a temporary file to store the filtered output
 	let l:tempfile = tempname()
@@ -1448,13 +1476,29 @@ function! ExecuteThreadMessage(messageJson, eventName)
 	let l:shell_script = []
 	call add(l:shell_script, '#!/bin/bash')
 	call add(l:shell_script, l:curl_cmd . ' | while IFS= read -r line; do')
+
+	" Capture the main eventName passed (e.g., thread.run.in_progress)
 	call add(l:shell_script, '  if [[ "$line" =~ "event: ' . a:eventName . '" ]]; then')
 	call add(l:shell_script, '    read -r line;')
 	call add(l:shell_script, '    if [[ "$line" =~ "data: " ]]; then')
 	call add(l:shell_script, '      response=${line#*data: }; echo $response >> ' . l:tempfile . ';')
 	call add(l:shell_script, '    fi;')
+
+	" Capture the thread.run.failed event
+	call add(l:shell_script, '  elif [[ "$line" =~ "event: thread.run.failed" ]]; then')
+	call add(l:shell_script, '    read -r line;')
+	call add(l:shell_script, '    if [[ "$line" =~ "data: " ]]; then')
+	call add(l:shell_script, '      response=${line#*data: }; echo "Failed Event: $response" >> ' . l:tempfile . ';')
+	call add(l:shell_script, '    fi;')
+
+	" You can add other events here similarly
+	call add(l:shell_script, '  elif [[ "$line" =~ "event: done" ]]; then')
+	call add(l:shell_script, '    echo "[DONE]" >> ' . l:tempfile . ';')
+
 	call add(l:shell_script, '  fi;')
 	call add(l:shell_script, 'done')
+
+
 
 	" Create a temporary script file
 	let l:shell_script_file = tempname()
@@ -1463,11 +1507,12 @@ function! ExecuteThreadMessage(messageJson, eventName)
 	" Make the script executable
 	call system('chmod +x ' . l:shell_script_file)
 
-	" Log the shell script to verify it
+	" log the shell script to verify it
 	call LogMessage('Executing shell script: ' . l:shell_script_file)
 
+
 	" Execute the shell script asynchronously with streaming output
-	execute 'silent !' . l:shell_script_file
+	execute '!' . l:shell_script_file 
 
 	" Check if the tempfile has content
 	if !filereadable(l:tempfile) || getfsize(l:tempfile) == 0
@@ -1475,6 +1520,10 @@ function! ExecuteThreadMessage(messageJson, eventName)
 		redraw!
 		return
 	endif
+
+	" copy l:tempfile to raw output file before moving it
+	let l:rawOutputFile = g:OPENAI_RESPONSES_DIR . '/openai_thread_run_raw_output'
+	call writefile(readfile(l:tempfile), l:rawOutputFile, 'b')
 
 	" Move the filtered output to the final output file
 	execute 'silent !mv ' . l:tempfile . ' ' . l:outputfile
@@ -1917,7 +1966,7 @@ endfunction
 "     file with project information, and creating a sample JSON message request file.
 "
 " Parameters:
-"     projectPath (string): The path to the project's base directory.
+"     projectPath (string): The path to the project's base directory.i.e the directory containing the project files.
 "     directoryToPreserve (list): A list of subdirectory names to be preserved within the project directory when it is recreated.
 "
 " Details:
@@ -1955,6 +2004,14 @@ endfunction
 function! SetupProjectAssistant(projectPath, directoryToPreserve)
 	" Create log file
 	let s:logfile = CreateLogFile()
+
+	" assert that projectPath is a directory with files
+	if !isdirectory(a:projectPath)
+		echoerr 'Error: The specified project path is not a directory.'
+		" Log the error
+		call LogMessage('Error: The specified project path is not a directory.' . ' Path: ' . a:projectPath)
+		return
+	endif
 
     " create a working directory for the project
     call CreateProjectAssistantWorkingDir(a:projectPath, '', a:directoryToPreserve)
@@ -2369,4 +2426,5 @@ function! PollVectorStoreUploadCompletion()
 	endfor
 	redraw!
 	echo 'Upload to Vector Store complete'
+	let l:fileExtMapping = {'cs': '', 'ts':''}
 endfunction
